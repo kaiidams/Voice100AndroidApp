@@ -126,7 +126,16 @@ namespace VoiceAndroidApp
                                 _unvoicedAverage = Math.Min(-30.0, _unvoicedAverage * 0.9 + mag * 0.1);
                             }
 
-                            _magnitudeText.Text = $"{isVoiced} {mag:##.#} {_voicedAverage:##.#} {_unvoicedAverage:##.#}";
+                            int zeroCrossCount = 0;
+                            for (int i = 0; i < waveform.Length - 1; i++)
+                            {
+                                if (waveform[i] >= 0 && waveform[i + 1] < 0 || waveform[i + 1] >= 0 && waveform[i] < 0)
+                                {
+                                    zeroCrossCount++;
+                                }
+                            }
+
+                            _magnitudeText.Text = $"{isVoiced} {mag:##.#} {_voicedAverage:##.#} {_unvoicedAverage:##.#} {zeroCrossCount}";
                         });
                     }
                     catch (Exception ex)
