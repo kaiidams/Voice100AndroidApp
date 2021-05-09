@@ -66,6 +66,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AudioFeatureBuffer.cs" />
+    <Compile Include="GraphView.cs" />
     <Compile Include="MagmaColorMap.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="MelSpectrogram.cs" />

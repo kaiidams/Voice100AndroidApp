@@ -22,10 +22,12 @@ namespace VoiceAndroidApp
         private AudioRecord _audRecorder;
         private MelSpectrogram _melSpectrogram;
         private SpectrogramView _spectrogramView;
+        private GraphView _graphView;
         protected Handler _handler;
         private AppCompatButton _startRecordButton;
         private AppCompatButton _stopRecordButton;
         private AppCompatButton _startPlayButton;
+        private AppCompatTextView _magnitudeText;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -41,6 +43,8 @@ namespace VoiceAndroidApp
 
             _melSpectrogram = new MelSpectrogram();
             _spectrogramView = FindViewById<SpectrogramView>(Resource.Id.spectrogram);
+            _graphView = FindViewById<GraphView>(Resource.Id.graph);
+            _magnitudeText = FindViewById<AppCompatTextView>(Resource.Id.magnitude);
 
             _startRecordButton = FindViewById<AppCompatButton>(Resource.Id.start_recording);
             _startRecordButton.Click += StartRecordingClick;
@@ -95,6 +99,15 @@ namespace VoiceAndroidApp
                             float[] spec = new float[257];
                             _melSpectrogram.Spectrogram(waveform, 0, spec, 0);
                             _spectrogramView.AddFrame(spec);
+                            double mag = 0.0f;
+                            for (int i = 0; i < waveform.Length; i++)
+                            {
+                                mag += waveform[i] * waveform[i];
+                            }
+                            mag = 10 * Math.Log10(mag / waveform.Length);
+                            _graphView.AddValue((float)mag);
+
+                            _magnitudeText.Text = mag.ToString();
                         });
                     }
                     catch (Exception ex)

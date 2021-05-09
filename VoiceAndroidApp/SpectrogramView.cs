@@ -19,8 +19,8 @@ namespace VoiceAndroidApp
         private int[] _colors;
         private int _timeFrameLength;
         private int _spectrumLength;
-        private float _maxDb;
-        private float _minDb;
+        private float _maxValue;
+        private float _minValue;
 
         public SpectrogramView(Context context) : base(context)
         {
@@ -39,8 +39,8 @@ namespace VoiceAndroidApp
 
         private void Init()
         {
-            _maxDb = 0.0f;
-            _minDb = -80.0f;
+            _maxValue = 0.0f;
+            _minValue = (float)(-80.0f * Math.Log(10.0));
             UpdateBitmap(256, 64);
         }
 
@@ -50,6 +50,7 @@ namespace VoiceAndroidApp
             _spectrumLength = spectrumLength;
             _bitmap = Bitmap.CreateBitmap(_timeFrameLength, _spectrumLength, Bitmap.Config.Argb8888);
             _colors = new int[_timeFrameLength * _spectrumLength];
+            Array.Fill(_colors, MagmaColorMap.Rgb(0.0f));
         }
 
         public void AddFrame(float[] frame)
@@ -57,7 +58,7 @@ namespace VoiceAndroidApp
             Array.Copy(_colors, 1, _colors, 0, _colors.Length - 1);
             for (int i = 0; i < _spectrumLength; i++)
             {
-                float v = (frame[i] - _minDb) / (_maxDb - _minDb);
+                float v = (frame[i] - _minValue) / (_maxValue - _minValue);
                 _colors[_timeFrameLength * (_spectrumLength - i) - 1] = MagmaColorMap.Rgb(v);
             }
             Invalidate();
