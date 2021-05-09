@@ -29,6 +29,9 @@ namespace VoiceAndroidApp
         private AppCompatButton _startPlayButton;
         private AppCompatTextView _magnitudeText;
 
+        private double _voicedAverage;
+        private double _unvoicedAverage;
+
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
@@ -55,6 +58,9 @@ namespace VoiceAndroidApp
             _startRecordButton.Enabled = true;
             _stopRecordButton.Enabled = false;
             _startPlayButton.Enabled = false;
+
+            _voicedAverage = -20.0;
+            _unvoicedAverage = -40.0;
         }
 
         private void StartRecordingClick(object sender, EventArgs e)
@@ -107,7 +113,20 @@ namespace VoiceAndroidApp
                             mag = 10 * Math.Log10(mag / waveform.Length);
                             _graphView.AddValue((float)mag);
 
-                            _magnitudeText.Text = mag.ToString();
+                            bool isVoiced = false;
+                            if (2 * mag > _unvoicedAverage + _voicedAverage)
+                            {
+                                isVoiced = true;
+                                // Voiced
+                                _voicedAverage = Math.Max(_voicedAverage * 0.9 + mag * 0.1, -30.0);
+                            }
+                            else
+                            {
+                                // Unvoiced
+                                _unvoicedAverage = Math.Min(-30.0, _unvoicedAverage * 0.9 + mag * 0.1);
+                            }
+
+                            _magnitudeText.Text = $"{isVoiced} {mag:##.#} {_voicedAverage:##.#} {_unvoicedAverage:##.#}";
                         });
                     }
                     catch (Exception ex)

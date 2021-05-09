@@ -39,7 +39,7 @@ namespace VoiceAndroidApp
         {
             _maxValue = 0.0f;
             _minValue = -80.0f;
-            _history = new float[128];
+            _history = new float[256];
             _paint = new Paint();
             _paint.SetStyle(Paint.Style.Stroke);
             _paint.Color = Color.Black;
@@ -64,7 +64,7 @@ namespace VoiceAndroidApp
             for (int i = 0; i < _history.Length; i++)
             {
                 float v = _history[i];
-                float x = width * i / _history.Length;
+                float x = width * (i + 0.5f) / _history.Length;
                 float y = height * (1 - (v - _minValue) / (_maxValue - _minValue));
                 if (i == 0)
                 {
