@@ -16,17 +16,16 @@ namespace VoiceAndroidApp
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
     public class MainActivity : AppCompatActivity
     {
-        private string _filePath;
-        private MediaPlayer _mediaPlayer;
-        private MediaRecorder _mediaRecorder;
         protected bool _isRecording;
         private Thread _recordingThread;
         private byte[] _audioBuffer;
         private AudioRecord _audRecorder;
         private MelSpectrogram _melSpectrogram;
-        private SpectrumView _spectrumView;
         private SpectrogramView _spectrogramView;
         protected Handler _handler;
+        private AppCompatButton _startRecordButton;
+        private AppCompatButton _stopRecordButton;
+        private AppCompatButton _startPlayButton;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -40,71 +39,26 @@ namespace VoiceAndroidApp
             FloatingActionButton fab = FindViewById<FloatingActionButton>(Resource.Id.fab);
             fab.Click += FabOnClick;
 
-            MediaInit();
-
-            AppCompatButton button = FindViewById<AppCompatButton>(Resource.Id.start_recording);
-            button.Click += StartRecordingClick;
-            button = FindViewById<AppCompatButton>(Resource.Id.stop_recording);
-            button.Click += StopRecordingClick;
-            button = FindViewById<AppCompatButton>(Resource.Id.start_playing);
-            button.Click += StartPlayingClick;
-
-            button = FindViewById<AppCompatButton>(Resource.Id.start_recording_low);
-            button.Click += StartRecordingLowClick;
-            button = FindViewById<AppCompatButton>(Resource.Id.stop_recording_low);
-            button.Click += StopRecordingLowClick;
-            button = FindViewById<AppCompatButton>(Resource.Id.start_playing_low);
-            button.Click += StartPlayingLowClick;
-
-            _spectrogramView = FindViewById<SpectrogramView>(Resource.Id.spectrogram);
-            _spectrumView = FindViewById<SpectrumView>(Resource.Id.spectrum);
-        }
-
-        private void MediaInit()
-        {
-            _filePath = Path.Combine(CacheDir.AbsolutePath, "test.wav");
-            using (var outputStream = File.OpenWrite(_filePath))
-            using (var stream = Assets.Open("test.wav"))
-            {
-                stream.CopyTo(outputStream);
-            }
-            _mediaRecorder = new MediaRecorder();
-            _mediaPlayer = new MediaPlayer();
             _melSpectrogram = new MelSpectrogram();
+            _spectrogramView = FindViewById<SpectrogramView>(Resource.Id.spectrogram);
+
+            _startRecordButton = FindViewById<AppCompatButton>(Resource.Id.start_recording);
+            _startRecordButton.Click += StartRecordingClick;
+            _stopRecordButton = FindViewById<AppCompatButton>(Resource.Id.stop_recording);
+            _stopRecordButton.Click += StopRecordingClick;
+            _startPlayButton = FindViewById<AppCompatButton>(Resource.Id.start_playing);
+            _startPlayButton.Click += StartPlayingClick;
+            _startRecordButton.Enabled = true;
+            _stopRecordButton.Enabled = false;
+            _startPlayButton.Enabled = false;
         }
 
         private void StartRecordingClick(object sender, EventArgs e)
         {
-            if (File.Exists(_filePath))
-            {
-                File.Delete(_filePath);
-            }
-            _mediaRecorder.Reset();
-            _mediaRecorder.SetAudioSource(AudioSource.Mic);
-            _mediaRecorder.SetOutputFormat(OutputFormat.ThreeGpp);
-            _mediaRecorder.SetAudioEncoder(AudioEncoder.AmrNb);
-            // Initialized state.
-            _mediaRecorder.SetOutputFile(_filePath);
-            // DataSourceConfigured state.
-            _mediaRecorder.Prepare(); // Prepared state
-            _mediaRecorder.Start(); // Recording state.
-        }
+            _startRecordButton.Enabled = false;
+            _stopRecordButton.Enabled = true;
+            _startPlayButton.Enabled = false;
 
-        private void StopRecordingClick(object sender, EventArgs e)
-        {
-            _mediaRecorder.Stop();
-        }
-
-        private void StartPlayingClick(object sender, EventArgs e)
-        {
-            _mediaPlayer.Reset();
-            _mediaPlayer.SetDataSource(_filePath);
-            _mediaPlayer.Prepare();
-            _mediaPlayer.Start();
-        }
-
-        private void StartRecordingLowClick(object sender, EventArgs e)
-        {
             _audioBuffer = new byte[1024 * 2];
             _audRecorder = new AudioRecord(
               // Hardware source of recording.
@@ -141,17 +95,6 @@ namespace VoiceAndroidApp
                             float[] spec = new float[257];
                             _melSpectrogram.Spectrogram(waveform, 0, spec, 0);
                             _spectrogramView.AddFrame(spec);
-                            float maxValue = -1000.0f;
-                            for (int i = 0; i < spec.Length; i++)
-                            {
-                                if (maxValue < spec[i]) maxValue = spec[i];
-                            }
-                            for (int i = 0; i < spec.Length; i++)
-                            {
-                                spec[i] -= maxValue;
-                            }
-                            Array.Copy(spec, _spectrumView.Spectrum, spec.Length);
-                            _spectrumView.Invalidate();
                         });
                     }
                     catch (Exception ex)
@@ -165,14 +108,18 @@ namespace VoiceAndroidApp
             _recordingThread.Start();
         }
 
-        private void StopRecordingLowClick(object sender, EventArgs e)
+        private void StopRecordingClick(object sender, EventArgs e)
         {
+            _startRecordButton.Enabled = true;
+            _stopRecordButton.Enabled = false;
+            _startPlayButton.Enabled = false;
+
             _audRecorder.Stop();
             _isRecording = false;
             _recordingThread.Join();
         }
 
-        private void StartPlayingLowClick(object sender, EventArgs e)
+        private void StartPlayingClick(object sender, EventArgs e)
         {
             AudioTrack audioTrack = new AudioTrack(
               // Stream type

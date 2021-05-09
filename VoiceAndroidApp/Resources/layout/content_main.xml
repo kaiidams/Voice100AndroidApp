@@ -16,45 +16,21 @@
         android:id="@+id/linearLayout1">
         <Button
             android:id="@+id/start_recording"
-            android:text="Start recording"
+            android:text="@string/start_recording"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
         <Button
             android:id="@+id/stop_recording"
-            android:text="Stop recording"
+            android:text="@string/stop_recording"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
         <Button
             android:id="@+id/start_playing"
-            android:text="Start playing"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <TextView
-            android:text="Low-level"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <Button
-            android:id="@+id/start_recording_low"
-            android:text="Start recording"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <Button
-            android:id="@+id/stop_recording_low"
-            android:text="Stop recording"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <Button
-            android:id="@+id/start_playing_low"
-            android:text="Start playing"
+            android:text="@string/start_playing"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
         <voiceandroidapp.SpectrogramView
             android:id="@+id/spectrogram"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:layout_centerInParent="true" />
-        <voiceandroidapp.SpectrumView
-            android:id="@+id/spectrum"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:layout_centerInParent="true" />

@@ -1,4 +1,7 @@
 <resources>
-    <string name="app_name">VoiceAndroidApp</string>
-    <string name="action_settings">Settings</string>
+  <string name="app_name">Spectrogram Viewer</string>
+  <string name="action_settings">Settings</string>
+  <string name="start_recording">Start recording</string>
+  <string name="stop_recording">Stop recording</string>
+  <string name="start_playing">Start playing</string>
 </resources>
