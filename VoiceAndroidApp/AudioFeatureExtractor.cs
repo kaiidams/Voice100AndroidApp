@@ -2,7 +2,7 @@
 
 namespace VoiceAndroidApp
 {
-    class MelSpectrogram
+    class AudioFeatureExtractor
     {
         private double[] window;
         private double[] melBands;
@@ -13,7 +13,7 @@ namespace VoiceAndroidApp
         private double _sampleRate;
         private double _logOffset;
 
-        public MelSpectrogram(
+        public AudioFeatureExtractor(
             int sampleRate = 16000,
             int stftWindowLength = 400, int stftLength = 512,
             int nMelBands = 64, double melMinHz = 125.0, double melMaxHz = 7500.0,
@@ -47,12 +47,12 @@ namespace VoiceAndroidApp
             int specLength = _fftLength / 2 + 1;
             for (int i = 0; i < specLength; i++)
             {
-                float value = (float)(20.0 * Math.Log(temp2[i]));
+                float value = (float)(20.0 * Math.Log(temp2[i] + _logOffset));
                 spec[specOffset + i] = value;
             }
         }
 
-        public void Transform(float[] waveform, int waveformOffset, float[] melspec, int melspecOffset)
+        public void MelSpectrogram(float[] waveform, int waveformOffset, float[] melspec, int melspecOffset)
         {
             GetFrame(waveform, waveformOffset, temp1);
             CFFT(temp1, temp2, _fftLength);

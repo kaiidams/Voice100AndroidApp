@@ -11,7 +11,7 @@ namespace VoiceAndroidApp
     {
         public const int InputSamplingRate = 16000;
 
-        private readonly MelSpectrogram _mfcc;
+        private readonly AudioFeatureExtractor _mfcc;
         private readonly int _stftHopLength;
         private readonly int _stftWindowLength;
         private readonly int _nMelBands;
@@ -23,7 +23,7 @@ namespace VoiceAndroidApp
 
         public AudioFeatureBuffer(int stftHopLength = 160, int stftWindowLength = 400, int nMelBands = 64)
         {
-            _mfcc = new MelSpectrogram();
+            _mfcc = new AudioFeatureExtractor();
             _stftHopLength = stftHopLength;
             _stftWindowLength = stftWindowLength;
             _nMelBands = nMelBands;
@@ -75,7 +75,7 @@ namespace VoiceAndroidApp
                 int wavebufferOffset = 0;
                 while (wavebufferOffset + _stftWindowLength < _waveformCount)
                 {
-                    _mfcc.Transform(_waveformBuffer, wavebufferOffset, _outputBuffer, _outputCount);
+                    _mfcc.MelSpectrogram(_waveformBuffer, wavebufferOffset, _outputBuffer, _outputCount);
                     _outputCount += _nMelBands;
                     wavebufferOffset += _stftHopLength;
                 }
@@ -97,7 +97,7 @@ namespace VoiceAndroidApp
                 {
                     return written;
                 }
-                _mfcc.Transform(waveform, offset + written, _outputBuffer, _outputCount);
+                _mfcc.MelSpectrogram(waveform, offset + written, _outputBuffer, _outputCount);
                 _outputCount += _nMelBands;
                 written += _stftHopLength;
             }

@@ -20,7 +20,7 @@ namespace VoiceAndroidApp
         private Thread _recordingThread;
         private byte[] _audioBuffer;
         private AudioRecord _audRecorder;
-        private MelSpectrogram _melSpectrogram;
+        private AudioFeatureExtractor _melSpectrogram;
         private SpectrogramView _spectrogramView;
         private GraphView _graphView;
         protected Handler _handler;
@@ -44,7 +44,7 @@ namespace VoiceAndroidApp
             FloatingActionButton fab = FindViewById<FloatingActionButton>(Resource.Id.fab);
             fab.Click += FabOnClick;
 
-            _melSpectrogram = new MelSpectrogram();
+            _melSpectrogram = new AudioFeatureExtractor();
             _spectrogramView = FindViewById<SpectrogramView>(Resource.Id.spectrogram);
             _graphView = FindViewById<GraphView>(Resource.Id.graph);
             _magnitudeText = FindViewById<AppCompatTextView>(Resource.Id.magnitude);

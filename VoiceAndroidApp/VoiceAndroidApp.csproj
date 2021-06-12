@@ -69,7 +69,7 @@
     <Compile Include="GraphView.cs" />
     <Compile Include="MagmaColorMap.cs" />
     <Compile Include="MainActivity.cs" />
-    <Compile Include="MelSpectrogram.cs" />
+    <Compile Include="AudioFeatureExtractor.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpectrogramView.cs" />
