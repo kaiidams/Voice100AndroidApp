@@ -39,8 +39,8 @@ namespace VoiceAndroidApp
 
         private void Init()
         {
-            _maxValue = 0.0f;
-            _minValue = (float)(-80.0f * Math.Log(10.0));
+            _maxValue = 5.0f;
+            _minValue = (float)(Math.Log(1e-4));
             UpdateBitmap(256, 64);
         }
 
@@ -56,10 +56,22 @@ namespace VoiceAndroidApp
         public void AddFrame(float[] frame)
         {
             Array.Copy(_colors, 1, _colors, 0, _colors.Length - 1);
+            float maxData = -200.0f;
             for (int i = 0; i < _spectrumLength; i++)
             {
                 float v = (frame[i] - _minValue) / (_maxValue - _minValue);
+                if (frame[i] > maxData) maxData = frame[i];
                 _colors[_timeFrameLength * (_spectrumLength - i) - 1] = MagmaColorMap.Rgb(v);
+            }
+            Invalidate();
+        }
+
+        public void AddSeparator(int color)
+        {
+            Array.Copy(_colors, 1, _colors, 0, _colors.Length - 1);
+            for (int i = 0; i < _spectrumLength; i++)
+            {
+                _colors[_timeFrameLength * (_spectrumLength - i) - 1] = color;
             }
             Invalidate();
         }

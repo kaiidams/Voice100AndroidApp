@@ -10,16 +10,21 @@ using Google.Android.Material.Snackbar;
 using System.IO;
 using Android.Media;
 using System.Threading;
+using Voice100Sharp;
+using Android.Graphics;
 
 namespace VoiceAndroidApp
 {
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
     public class MainActivity : AppCompatActivity
     {
+        private const int SampleRate = 16000;
+        private const double MaxWaveformLength = 10.0f; // 10 sec
+        private const int AudioBufferLength = 1024; // 64 msec
+
         protected bool _isRecording;
         private Thread _recordingThread;
-        private byte[] _audioBuffer;
-        private AudioRecord _audRecorder;
+        private AudioRecord _audioRecorder;
         private AudioFeatureExtractor _melSpectrogram;
         private SpectrogramView _spectrogramView;
         private GraphView _graphView;
@@ -28,9 +33,8 @@ namespace VoiceAndroidApp
         private AppCompatButton _stopRecordButton;
         private AppCompatButton _startPlayButton;
         private AppCompatTextView _magnitudeText;
-
-        private double _voicedAverage;
-        private double _unvoicedAverage;
+        private AppCompatTextView _recognitionText;
+        private VoiceSession _voiceSession;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -48,6 +52,7 @@ namespace VoiceAndroidApp
             _spectrogramView = FindViewById<SpectrogramView>(Resource.Id.spectrogram);
             _graphView = FindViewById<GraphView>(Resource.Id.graph);
             _magnitudeText = FindViewById<AppCompatTextView>(Resource.Id.magnitude);
+            _recognitionText = FindViewById<AppCompatTextView>(Resource.Id.recognition);
 
             _startRecordButton = FindViewById<AppCompatButton>(Resource.Id.start_recording);
             _startRecordButton.Click += StartRecordingClick;
@@ -59,8 +64,41 @@ namespace VoiceAndroidApp
             _stopRecordButton.Enabled = false;
             _startPlayButton.Enabled = false;
 
-            _voicedAverage = -20.0;
-            _unvoicedAverage = -40.0;
+            string ortFile = "stt_en_conv_base_ctc-20210617.basic.ort";
+
+            using (var input = Assets.Open(ortFile))
+            {
+                byte[] buffer = new byte[20000000];
+                int len = input.Read(buffer);
+                byte[] ortData = buffer.AsSpan(0, len).ToArray();
+                _voiceSession = new VoiceSession(ortData);
+                _voiceSession.OnDebugInfo += OnDebugInfo;
+                _voiceSession.OnSpeechRecognition = OnSpeechRecognition;
+            }
+        }
+
+        private void OnDebugInfo(string text)
+        {
+            RunOnUiThread(() =>
+            {
+                _magnitudeText.Text = text;
+            });
+        }
+
+        private void OnSpeechRecognition(short[] audio, float[] melspec, string text)
+        {
+            RunOnUiThread(() =>
+            {
+                _spectrogramView.AddSeparator(Color.Green);
+                float[] s = new float[64];
+                for (int i = 0; i < melspec.Length; i += 64)
+                {
+                    Array.Copy(melspec, i, s, 0, 64);
+                    _spectrogramView.AddFrame(s);
+                }
+
+                _recognitionText.Text = text;
+            });
         }
 
         private void StartRecordingClick(object sender, EventArgs e)
@@ -69,74 +107,30 @@ namespace VoiceAndroidApp
             _stopRecordButton.Enabled = true;
             _startPlayButton.Enabled = false;
 
-            _audioBuffer = new byte[1024 * 2];
-            _audRecorder = new AudioRecord(
-              // Hardware source of recording.
-              AudioSource.Mic,
-              // Frequency
-              16000,
-              // Mono or stereo
-              ChannelIn.Mono,
-              // Audio encoding
-              Android.Media.Encoding.Pcm16bit,
-              // Length of the audio clip.
-              _audioBuffer.Length
+            _audioRecorder = new AudioRecord(
+                AudioSource.Mic,
+                SampleRate,
+                ChannelIn.Mono,
+                Android.Media.Encoding.Pcm16bit,
+                AudioBufferLength * sizeof(short)
             );
-            _audRecorder.StartRecording();
+            _audioRecorder.StartRecording();
 
             _recordingThread = new Thread(() =>
             {
+                var audioBuffer = new byte[AudioBufferLength * sizeof(short)];
                 while (true)
                 {
                     try
                     {
-                        // Keep reading the buffer while there is audio input.
-                        int read = _audRecorder.Read(_audioBuffer, 0, _audioBuffer.Length);
+                        // Keep reading the buffer while audio input is available.
+                        int read = _audioRecorder.Read(audioBuffer, 0, audioBuffer.Length);
                         // Write out the audio file.
                         if (read == 0)
                         {
                             break;
                         }
-                        var int16waveform = new short[1024];
-                        Buffer.BlockCopy(_audioBuffer, 0, int16waveform, 0, _audioBuffer.Length);
-                        var waveform = new float[1024];
-                        for (int i = 0; i < int16waveform.Length; i++) waveform[i] = int16waveform[i] / 32767.0f;
-                        RunOnUiThread(() => {
-                            float[] spec = new float[257];
-                            _melSpectrogram.Spectrogram(waveform, 0, spec, 0);
-                            _spectrogramView.AddFrame(spec);
-                            double mag = 0.0f;
-                            for (int i = 0; i < waveform.Length; i++)
-                            {
-                                mag += waveform[i] * waveform[i];
-                            }
-                            mag = 10 * Math.Log10(mag / waveform.Length);
-                            _graphView.AddValue((float)mag);
-
-                            bool isVoiced = false;
-                            if (2 * mag > _unvoicedAverage + _voicedAverage)
-                            {
-                                isVoiced = true;
-                                // Voiced
-                                _voicedAverage = Math.Max(_voicedAverage * 0.9 + mag * 0.1, -30.0);
-                            }
-                            else
-                            {
-                                // Unvoiced
-                                _unvoicedAverage = Math.Min(-30.0, _unvoicedAverage * 0.9 + mag * 0.1);
-                            }
-
-                            int zeroCrossCount = 0;
-                            for (int i = 0; i < waveform.Length - 1; i++)
-                            {
-                                if (waveform[i] >= 0 && waveform[i + 1] < 0 || waveform[i + 1] >= 0 && waveform[i] < 0)
-                                {
-                                    zeroCrossCount++;
-                                }
-                            }
-
-                            _magnitudeText.Text = $"{isVoiced} {mag:##.#} {_voicedAverage:##.#} {_unvoicedAverage:##.#} {zeroCrossCount}";
-                        });
+                        _voiceSession.AddAudioBytes(audioBuffer, read);
                     }
                     catch (Exception ex)
                     {
@@ -155,18 +149,19 @@ namespace VoiceAndroidApp
             _stopRecordButton.Enabled = false;
             _startPlayButton.Enabled = false;
 
-            _audRecorder.Stop();
+            _audioRecorder.Stop();
             _isRecording = false;
             _recordingThread.Join();
         }
 
         private void StartPlayingClick(object sender, EventArgs e)
         {
+            byte[] _audioBuffer = null;
             AudioTrack audioTrack = new AudioTrack(
               // Stream type
               Android.Media.Stream.Music,
               // Frequency
-              11025,
+              16000,
               // Mono or stereo
               ChannelOut.Mono,
               // Audio encoding

@@ -44,6 +44,11 @@
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:layout_centerInParent="true" />
+        <TextView
+            android:id="@+id/recognition"
+            android:text="0"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
     </LinearLayout>
 
 </RelativeLayout>
