@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31205.134
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VoiceAndroidApp", "VoiceAndroidApp\VoiceAndroidApp.csproj", "{1941626D-CDF5-491E-A0B7-A24B0AC721AC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voice100AndroidApp", "Voice100AndroidApp\Voice100AndroidApp.csproj", "{1941626D-CDF5-491E-A0B7-A24B0AC721AC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -89,7 +89,7 @@
     <AndroidNativeLibrary Include="lib\x86_64\libonnxruntime.so">
       <Abi>x86_64</Abi>
     </AndroidNativeLibrary>
-    <AndroidAsset Include="Assets\stt_en_conv_base_ctc-20210617.basic.ort" />
+    <AndroidAsset Include="Assets\stt_en_conv_base_ctc.all.ort" />
     <None Include="Resources\AboutResources.txt" />
     <None Include="Properties\AndroidManifest.xml" />
     <None Include="Assets\AboutAssets.txt" />

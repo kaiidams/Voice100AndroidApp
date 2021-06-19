@@ -21,6 +21,7 @@ namespace VoiceAndroidApp
         private const int SampleRate = 16000;
         private const double MaxWaveformLength = 10.0f; // 10 sec
         private const int AudioBufferLength = 1024; // 64 msec
+        private const string AsrOrtPath = "stt_en_conv_base_ctc.all.ort";
 
         protected bool _isRecording;
         private Thread _recordingThread;
@@ -64,9 +65,7 @@ namespace VoiceAndroidApp
             _stopRecordButton.Enabled = false;
             _startPlayButton.Enabled = false;
 
-            string ortFile = "stt_en_conv_base_ctc-20210617.basic.ort";
-
-            using (var input = Assets.Open(ortFile))
+            using (var input = Assets.Open(AsrOrtPath))
             {
                 byte[] buffer = new byte[20000000];
                 int len = input.Read(buffer);
@@ -95,6 +94,18 @@ namespace VoiceAndroidApp
                 {
                     Array.Copy(melspec, i, s, 0, 64);
                     _spectrogramView.AddFrame(s);
+                }
+
+                for (int i = 0; i + 160 <= audio.Length; i += 160)
+                {
+                    double sum = 0.0;
+                    for (int j = 0; j < 160; j++)
+                    {
+                        double v = audio[i + j] / 32768.0;
+                        sum += v * v;
+                    }
+                    float db = (float)(10.0 * Math.Log10(sum / 160));
+                    _graphView.AddValue(db);
                 }
 
                 _recognitionText.Text = text;

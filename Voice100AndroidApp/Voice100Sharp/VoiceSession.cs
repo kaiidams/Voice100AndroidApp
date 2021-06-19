@@ -63,7 +63,16 @@ namespace Voice100Sharp
 
         public VoiceSession(byte[] onnxData) : this()
         {
+#if false
+            var so = new SessionOptions();
+            uint NNAPI_FLAG_USE_FP16 = 0x001;
+            uint NNAPI_FLAG_USE_NCHW = 0x002;
+            uint NNAPI_FLAG_CPU_DISABLED = 0x004;
+            so.AppendExecutionProvider_Nnapi(NNAPI_FLAG_USE_NCHW | NNAPI_FLAG_USE_FP16 | NNAPI_FLAG_CPU_DISABLED);
+            _inferSess = new InferenceSession(onnxData, so);
+#else
             _inferSess = new InferenceSession(onnxData);
+#endif
         }
 
         public bool IsVoiced { get { return _isVoiced; } }
@@ -233,7 +242,7 @@ namespace Voice100Sharp
 
         private void AnalyzeAudio(short[] audio, float[] melspec)
         {
-            const string vocab = " abcdefghijklmnopqrstuvwxyz'";
+            const string vocab = "_ abcdefghijklmnopqrstuvwxyz'";
             var container = new List<NamedOnnxValue>();
             int[] melspecLength = new int[1] { melspec.Length };
             var audioData = new DenseTensor<float>(melspec, new int[3] { 1, melspec.Length / 64, 64 });
@@ -259,7 +268,7 @@ namespace Voice100Sharp
                     }
                     pred += vocab[k];
                 }
-                pred = Regex.Replace(pred, @"(.)\1+", @"$1").Replace(" ", "");
+                pred = Regex.Replace(pred, @"(.)\1+", @"$1").Replace("_", "");
                 //Console.WriteLine(pred);
                 OnSpeechRecognition(audio, melspec, pred);
             }
