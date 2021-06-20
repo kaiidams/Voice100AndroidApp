@@ -19,14 +19,12 @@ namespace VoiceAndroidApp
     public class MainActivity : AppCompatActivity
     {
         private const int SampleRate = 16000;
-        private const double MaxWaveformLength = 10.0f; // 10 sec
-        private const int AudioBufferLength = 1024; // 64 msec
+        private const int AudioBufferLength = 4096; // 256 msec
         private const string AsrOrtPath = "stt_en_conv_base_ctc.all.ort";
 
         protected bool _isRecording;
         private Thread _recordingThread;
         private AudioRecord _audioRecorder;
-        private AudioFeatureExtractor _melSpectrogram;
         private SpectrogramView _spectrogramView;
         private GraphView _graphView;
         protected Handler _handler;
@@ -49,7 +47,6 @@ namespace VoiceAndroidApp
             FloatingActionButton fab = FindViewById<FloatingActionButton>(Resource.Id.fab);
             fab.Click += FabOnClick;
 
-            _melSpectrogram = new AudioFeatureExtractor();
             _spectrogramView = FindViewById<SpectrogramView>(Resource.Id.spectrogram);
             _graphView = FindViewById<GraphView>(Resource.Id.graph);
             _magnitudeText = FindViewById<AppCompatTextView>(Resource.Id.magnitude);
@@ -74,6 +71,18 @@ namespace VoiceAndroidApp
                 _voiceSession.OnDebugInfo += OnDebugInfo;
                 _voiceSession.OnSpeechRecognition = OnSpeechRecognition;
             }
+        }
+
+        protected override void OnPause()
+        {
+            base.OnPause();
+            _startRecordButton.Enabled = true;
+            _stopRecordButton.Enabled = false;
+            _startPlayButton.Enabled = false;
+
+            _audioRecorder.Stop();
+            _isRecording = false;
+            _recordingThread.Join();
         }
 
         private void OnDebugInfo(string text)

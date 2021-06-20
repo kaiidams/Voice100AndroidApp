@@ -20,6 +20,8 @@ namespace Voice100Sharp
         const int AudioBytesBufferLength = 10 * SampleRate * sizeof(short);
         const int VadWindowLength = 160;
         const double VoicedDecibelThreshold = -30.0;
+        const double VoicedDecibelMinThreshold = -50.0;
+        const double VoicedDecibelMaxThreshold = 0.0;
         const double ActivateThreshold = 0.7;
         const double DeactivateThreshold = 0.2;
         const int MinRepeatVoicedCount = 10;
@@ -141,11 +143,17 @@ namespace Voice100Sharp
             _isVoiced = 2 * audioDecibel > _unvoicedAverageDecibel + _voicedAverageDecibel;
             if (_isVoiced)
             {
-                _voicedAverageDecibel = Math.Max(_voicedAverageDecibel * 0.9 + audioDecibel * 0.1, -30.0);
+                _voicedAverageDecibel = Math.Clamp(
+                    _voicedAverageDecibel * 0.9 + audioDecibel * 0.1,
+                    VoicedDecibelThreshold,
+                    VoicedDecibelMaxThreshold);
             }
             else
             {
-                _unvoicedAverageDecibel = Math.Min(-30.0, _unvoicedAverageDecibel * 0.9 + audioDecibel * 0.1);
+                _unvoicedAverageDecibel = Math.Clamp(
+                    _unvoicedAverageDecibel * 0.9 + audioDecibel * 0.1,
+                    VoicedDecibelMinThreshold,
+                    VoicedDecibelThreshold);
             }
         }
 
