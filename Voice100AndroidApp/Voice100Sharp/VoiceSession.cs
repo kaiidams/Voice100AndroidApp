@@ -246,9 +246,7 @@ namespace Voice100Sharp
             var container = new List<NamedOnnxValue>();
             int[] melspecLength = new int[1] { melspec.Length };
             var audioData = new DenseTensor<float>(melspec, new int[3] { 1, melspec.Length / 64, 64 });
-            var audioLengthData = new DenseTensor<int>(melspecLength, new int[1] { 1 });
             container.Add(NamedOnnxValue.CreateFromTensor<float>("audio", audioData));
-            container.Add(NamedOnnxValue.CreateFromTensor<int>("audio_len", audioLengthData));
             var res = _inferSess.Run(container, new string[] { "logits" });
             foreach (var score in res)
             {
