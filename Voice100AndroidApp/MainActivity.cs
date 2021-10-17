@@ -60,7 +60,7 @@ namespace VoiceAndroidApp
             _startPlayButton.Click += StartPlayingClick;
             _startRecordButton.Enabled = true;
             _stopRecordButton.Enabled = false;
-            _startPlayButton.Enabled = false;
+            _startPlayButton.Enabled = true;
 
             using (var input = Assets.Open(AsrOrtPath))
             {
@@ -76,13 +76,10 @@ namespace VoiceAndroidApp
         protected override void OnPause()
         {
             base.OnPause();
-            _startRecordButton.Enabled = true;
-            _stopRecordButton.Enabled = false;
-            _startPlayButton.Enabled = false;
-
-            _audioRecorder.Stop();
-            _isRecording = false;
-            _recordingThread.Join();
+            if (_isRecording)
+            {
+                StopRecording();
+            }
         }
 
         private void OnDebugInfo(string text)
@@ -125,13 +122,13 @@ namespace VoiceAndroidApp
         {
             _startRecordButton.Enabled = false;
             _stopRecordButton.Enabled = true;
-            _startPlayButton.Enabled = false;
+            _startPlayButton.Enabled = true;
 
             _audioRecorder = new AudioRecord(
                 AudioSource.Mic,
                 SampleRate,
                 ChannelIn.Mono,
-                Android.Media.Encoding.Pcm16bit,
+                Encoding.Pcm16bit,
                 AudioBufferLength * sizeof(short)
             );
             _audioRecorder.StartRecording();
@@ -163,20 +160,41 @@ namespace VoiceAndroidApp
             _recordingThread.Start();
         }
 
-        private void StopRecordingClick(object sender, EventArgs e)
+        private void StopRecording()
         {
             _startRecordButton.Enabled = true;
             _stopRecordButton.Enabled = false;
-            _startPlayButton.Enabled = false;
+            _startPlayButton.Enabled = true;
 
             _audioRecorder.Stop();
             _isRecording = false;
             _recordingThread.Join();
+            _audioRecorder = null;
+            _recordingThread = null;
+        }
+
+        private void StopRecordingClick(object sender, EventArgs e)
+        {
+            StopRecording();
         }
 
         private void StartPlayingClick(object sender, EventArgs e)
         {
-            byte[] _audioBuffer = null;
+            int OutputBufferSizeInBytes = 10 * 1024;
+
+            var audioTrack = new AudioTrack.Builder()
+                     .SetAudioAttributes(new AudioAttributes.Builder()
+                              .SetUsage(AudioUsageKind.Assistant)
+                              .SetContentType(AudioContentType.Speech)
+                              .Build())
+                     .SetAudioFormat(new AudioFormat.Builder()
+                             .SetEncoding(Encoding.Pcm16bit)
+                             .SetSampleRate(16000)
+                             .SetChannelMask(ChannelOut.Mono)
+                             .Build())
+                     .SetBufferSizeInBytes(OutputBufferSizeInBytes)
+                     .Build();
+#if false
             AudioTrack audioTrack = new AudioTrack(
               // Stream type
               Android.Media.Stream.Music,
@@ -191,8 +209,19 @@ namespace VoiceAndroidApp
               // Mode. Stream or static.
               AudioTrackMode.Stream);
 
-            audioTrack.Play();
             audioTrack.Write(_audioBuffer, 0, _audioBuffer.Length);
+#endif
+            audioTrack.Play();
+
+            using (var input = Assets.Open("sample.dat"))
+            {
+                byte[] buffer = new byte[157213 * sizeof(float)];
+                int len = input.Read(buffer);
+                byte[] data = buffer.AsSpan(0, len).ToArray();
+                var tts = new TTS();
+                var y = tts.Speak(data);
+                int len2 = audioTrack.Write(y, 0, y.Length);
+            }
         }
 
         public override bool OnCreateOptionsMenu(IMenu menu)
