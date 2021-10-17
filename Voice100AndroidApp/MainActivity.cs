@@ -20,7 +20,9 @@ namespace VoiceAndroidApp
     {
         private const int SampleRate = 16000;
         private const int AudioBufferLength = 4096; // 256 msec
-        private const string AsrOrtPath = "stt_en_conv_base_ctc.all.ort";
+        private const string STTORTPath = "stt_en_conv_base_ctc-20210619.all.ort";
+        private const string TTSAlignORTPath = "ttsalign_en_conv_base-20210808.all.ort";
+        private const string TTSAudioORTPath = "ttsaudio_en_conv_base-20210811.all.ort";
 
         protected bool _isRecording;
         private Thread _recordingThread;
@@ -34,6 +36,7 @@ namespace VoiceAndroidApp
         private AppCompatTextView _magnitudeText;
         private AppCompatTextView _recognitionText;
         private VoiceSession _voiceSession;
+        private TTS _tts;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -62,14 +65,29 @@ namespace VoiceAndroidApp
             _stopRecordButton.Enabled = false;
             _startPlayButton.Enabled = true;
 
-            using (var input = Assets.Open(AsrOrtPath))
+            byte[] ortData = ReadAssetInBytes(STTORTPath);
+            _voiceSession = new VoiceSession(ortData);
+            _voiceSession.OnDebugInfo += OnDebugInfo;
+            _voiceSession.OnSpeechRecognition = OnSpeechRecognition;
+            _tts = CreateTTS();
+        }
+
+        private TTS CreateTTS()
+        {
+            byte[] ttsAlignORTModel = ReadAssetInBytes(TTSAlignORTPath);
+            byte[] ttsAudioORTModel = ReadAssetInBytes(TTSAudioORTPath);
+            return new TTS(ttsAlignORTModel, ttsAudioORTModel);
+        }
+
+        private byte[] ReadAssetInBytes(string fileName)
+        {
+            using (var input = Assets.Open(fileName))
             {
-                byte[] buffer = new byte[20000000];
-                int len = input.Read(buffer);
-                byte[] ortData = buffer.AsSpan(0, len).ToArray();
-                _voiceSession = new VoiceSession(ortData);
-                _voiceSession.OnDebugInfo += OnDebugInfo;
-                _voiceSession.OnSpeechRecognition = OnSpeechRecognition;
+                using (var memoryStream = new MemoryStream())
+                {
+                    input.CopyTo(memoryStream);
+                    return memoryStream.ToArray();
+                }
             }
         }
 
@@ -194,34 +212,11 @@ namespace VoiceAndroidApp
                              .Build())
                      .SetBufferSizeInBytes(OutputBufferSizeInBytes)
                      .Build();
-#if false
-            AudioTrack audioTrack = new AudioTrack(
-              // Stream type
-              Android.Media.Stream.Music,
-              // Frequency
-              16000,
-              // Mono or stereo
-              ChannelOut.Mono,
-              // Audio encoding
-              Android.Media.Encoding.Pcm16bit,
-              // Length of the audio clip.
-              _audioBuffer.Length,
-              // Mode. Stream or static.
-              AudioTrackMode.Stream);
-
-            audioTrack.Write(_audioBuffer, 0, _audioBuffer.Length);
-#endif
             audioTrack.Play();
 
-            using (var input = Assets.Open("sample.dat"))
-            {
-                byte[] buffer = new byte[157213 * sizeof(float)];
-                int len = input.Read(buffer);
-                byte[] data = buffer.AsSpan(0, len).ToArray();
-                var tts = new TTS();
-                var y = tts.Speak(data);
-                int len2 = audioTrack.Write(y, 0, y.Length);
-            }
+            string text = "Beginnings are apt to be determinative and when reinforced by continuous applications of similar influence.";
+            var y = _tts.Speak(text);
+            int len = audioTrack.Write(y, 0, y.Length);
         }
 
         public override bool OnCreateOptionsMenu(IMenu menu)
