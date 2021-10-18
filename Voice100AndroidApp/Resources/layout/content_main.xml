@@ -24,9 +24,20 @@
             android:text="@string/stop_recording"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+        <EditText
+            android:id="@+id/input_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:text="@string/default_input_text" />
         <Button
             android:id="@+id/start_playing"
             android:text="@string/start_playing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <Button
+            android:id="@+id/stop_playing"
+            android:text="@string/stop_playing"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
         <TextView

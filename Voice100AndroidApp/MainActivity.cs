@@ -12,6 +12,8 @@ using Android.Media;
 using System.Threading;
 using Voice100Sharp;
 using Android.Graphics;
+using Xamarin.Essentials;
+using System.Threading.Tasks;
 
 namespace VoiceAndroidApp
 {
@@ -26,6 +28,8 @@ namespace VoiceAndroidApp
 
         protected bool _isRecording;
         private Thread _recordingThread;
+        protected bool _isPlaying;
+        private Thread _playingThread;
         private AudioRecord _audioRecorder;
         private SpectrogramView _spectrogramView;
         private GraphView _graphView;
@@ -33,8 +37,10 @@ namespace VoiceAndroidApp
         private AppCompatButton _startRecordButton;
         private AppCompatButton _stopRecordButton;
         private AppCompatButton _startPlayButton;
+        private AppCompatButton _stopPlayButton;
         private AppCompatTextView _magnitudeText;
         private AppCompatTextView _recognitionText;
+        private AppCompatEditText _inputTextEditText;
         private VoiceSession _voiceSession;
         private TTS _tts;
 
@@ -61,15 +67,17 @@ namespace VoiceAndroidApp
             _stopRecordButton.Click += StopRecordingClick;
             _startPlayButton = FindViewById<AppCompatButton>(Resource.Id.start_playing);
             _startPlayButton.Click += StartPlayingClick;
-            _startRecordButton.Enabled = true;
-            _stopRecordButton.Enabled = false;
-            _startPlayButton.Enabled = true;
+            _stopPlayButton = FindViewById<AppCompatButton>(Resource.Id.stop_playing);
+            _stopPlayButton.Click += StopPlayingClick;
+
+            _inputTextEditText = FindViewById<AppCompatEditText>(Resource.Id.input_text);
 
             byte[] ortData = ReadAssetInBytes(STTORTPath);
             _voiceSession = new VoiceSession(ortData);
             _voiceSession.OnDebugInfo += OnDebugInfo;
             _voiceSession.OnSpeechRecognition = OnSpeechRecognition;
             _tts = CreateTTS();
+            UpdateButtons();
         }
 
         private TTS CreateTTS()
@@ -94,10 +102,16 @@ namespace VoiceAndroidApp
         protected override void OnPause()
         {
             base.OnPause();
-            if (_isRecording)
-            {
-                StopRecording();
-            }
+            StopRecording();
+            StopPlaying();
+        }
+
+        private void UpdateButtons()
+        {
+            _startRecordButton.Enabled = !_isRecording;
+            _stopRecordButton.Enabled = _isRecording;
+            _startPlayButton.Enabled = !_isPlaying;
+            _stopPlayButton.Enabled = _isPlaying;
         }
 
         private void OnDebugInfo(string text)
@@ -180,25 +194,27 @@ namespace VoiceAndroidApp
 
         private void StopRecording()
         {
-            _startRecordButton.Enabled = true;
-            _stopRecordButton.Enabled = false;
-            _startPlayButton.Enabled = true;
-
-            _audioRecorder.Stop();
-            _isRecording = false;
-            _recordingThread.Join();
-            _audioRecorder = null;
-            _recordingThread = null;
+            if (_isRecording)
+            {
+                _audioRecorder.Stop();
+                _isRecording = false;
+                _recordingThread.Join();
+                _audioRecorder = null;
+                _recordingThread = null;
+            }
         }
 
         private void StopRecordingClick(object sender, EventArgs e)
         {
             StopRecording();
+            UpdateButtons();
         }
 
         private void StartPlayingClick(object sender, EventArgs e)
         {
             int OutputBufferSizeInBytes = 10 * 1024;
+
+            string text = _inputTextEditText.Text;
 
             var audioTrack = new AudioTrack.Builder()
                      .SetAudioAttributes(new AudioAttributes.Builder()
@@ -214,9 +230,41 @@ namespace VoiceAndroidApp
                      .Build();
             audioTrack.Play();
 
-            string text = "Beginnings are apt to be determinative and when reinforced by continuous applications of similar influence.";
-            var y = _tts.Speak(text);
-            int len = audioTrack.Write(y, 0, y.Length);
+            _playingThread = new Thread(() =>
+            {
+                var y = _tts.Speak(text);
+                while (true)
+                {
+                    int len = audioTrack.Write(y, 0, y.Length);
+                    break;
+                }
+
+                RunOnUiThread(() =>
+                {
+                    StopPlaying();
+                    UpdateButtons();
+                });
+            });
+
+            _isPlaying = true;
+            _playingThread.Start();
+            UpdateButtons();
+        }
+
+        private void StopPlaying()
+        {
+            if (_isPlaying)
+            {
+                _isPlaying = false;
+                _playingThread.Join();
+                _playingThread = null;
+            }
+        }
+
+        private void StopPlayingClick(object sender, EventArgs e)
+        {
+            StopPlaying();
+            UpdateButtons();
         }
 
         public override bool OnCreateOptionsMenu(IMenu menu)
@@ -236,11 +284,16 @@ namespace VoiceAndroidApp
             return base.OnOptionsItemSelected(item);
         }
 
-        private void FabOnClick(object sender, EventArgs eventArgs)
+        private async void FabOnClick(object sender, EventArgs eventArgs)
         {
-            View view = (View) sender;
-            Snackbar.Make(view, "Replace with your own action", Snackbar.LengthLong)
-                .SetAction("Action", (View.IOnClickListener)null).Show();
+            try
+            {
+                var uri = new Uri("https://github.com/kaiidams/Voice100AndroidApp.git");
+                await Browser.OpenAsync(uri, BrowserLaunchMode.SystemPreferred);
+            }
+            catch (Exception)
+            {
+            }
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)

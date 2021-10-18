@@ -4,4 +4,6 @@
   <string name="start_recording">Start recording</string>
   <string name="stop_recording">Stop recording</string>
   <string name="start_playing">Start playing</string>
+  <string name="stop_playing">Stop playing</string>
+  <string name="default_input_text">Please type here and click the button to speak.</string>
 </resources>
