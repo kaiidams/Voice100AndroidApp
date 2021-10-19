@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 
 namespace Voice100Sharp
 {
-    class VoiceSession
+    public class STTSession
     {
         public delegate void DebugInfoEvent(string text);
         public delegate void SpeechRecognitionEvent(short[] audio, float[] melspec, string text);
@@ -45,7 +45,7 @@ namespace Voice100Sharp
         private bool _isActive;
         private int _audioBufferActiveOffset;
 
-        private VoiceSession()
+        private STTSession()
         {
             _featureExtractor = new AudioFeatureExtractor();
             _audioBytesBuffer = new byte[AudioBytesBufferLength];
@@ -58,12 +58,12 @@ namespace Voice100Sharp
             _audioBufferActiveOffset = 0;
         }
 
-        public VoiceSession(string onnxPath) : this()
+        public STTSession(string onnxPath) : this()
         {
             _inferSess = new InferenceSession(onnxPath);
         }
 
-        public VoiceSession(byte[] onnxData) : this()
+        public STTSession(byte[] onnxData) : this()
         {
 #if false
             var so = new SessionOptions();

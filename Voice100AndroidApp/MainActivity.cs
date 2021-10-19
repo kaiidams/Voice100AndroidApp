@@ -41,7 +41,7 @@ namespace VoiceAndroidApp
         private AppCompatTextView _magnitudeText;
         private AppCompatTextView _recognitionText;
         private AppCompatEditText _inputTextEditText;
-        private VoiceSession _voiceSession;
+        private STTSession _voiceSession;
         private TTS _tts;
 
         protected override void OnCreate(Bundle savedInstanceState)
@@ -73,7 +73,7 @@ namespace VoiceAndroidApp
             _inputTextEditText = FindViewById<AppCompatEditText>(Resource.Id.input_text);
 
             byte[] ortData = ReadAssetInBytes(STTORTPath);
-            _voiceSession = new VoiceSession(ortData);
+            _voiceSession = new STTSession(ortData);
             _voiceSession.OnDebugInfo += OnDebugInfo;
             _voiceSession.OnSpeechRecognition = OnSpeechRecognition;
             _tts = CreateTTS();
