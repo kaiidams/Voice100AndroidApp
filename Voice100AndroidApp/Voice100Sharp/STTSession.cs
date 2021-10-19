@@ -20,7 +20,7 @@ namespace Voice100Sharp
         const int AudioBytesBufferLength = 10 * SampleRate * sizeof(short);
         const int VadWindowLength = 160;
         const double VoicedDecibelThreshold = -30.0;
-        const double VoicedDecibelMinThreshold = -50.0;
+        const double VoicedDecibelMinThreshold = -30.0;
         const double VoicedDecibelMaxThreshold = 0.0;
         const double ActivateThreshold = 0.7;
         const double DeactivateThreshold = 0.2;
