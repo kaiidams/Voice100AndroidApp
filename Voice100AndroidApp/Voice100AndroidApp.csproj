@@ -10,8 +10,8 @@
     <TemplateGuid>{84dd83c5-0fe3-4294-9419-09e7c8ba324f}</TemplateGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>VoiceAndroidApp</RootNamespace>
-    <AssemblyName>VoiceAndroidApp</AssemblyName>
+    <RootNamespace>Voice100AndroidApp</RootNamespace>
+    <AssemblyName>Voice100AndroidApp</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <Deterministic>True</Deterministic>
     <AndroidApplication>True</AndroidApplication>

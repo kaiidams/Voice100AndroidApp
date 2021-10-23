@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 using Android;
 using Android.Content.PM;
 
-namespace VoiceAndroidApp
+namespace Voice100AndroidApp
 {
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
     public class MainActivity : AppCompatActivity
