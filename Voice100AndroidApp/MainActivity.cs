@@ -6,7 +6,6 @@ using Android.Views;
 using AndroidX.AppCompat.Widget;
 using AndroidX.AppCompat.App;
 using Google.Android.Material.FloatingActionButton;
-using Google.Android.Material.Snackbar;
 using System.IO;
 using Android.Media;
 using System.Threading;
@@ -14,6 +13,8 @@ using Voice100Sharp;
 using Android.Graphics;
 using Xamarin.Essentials;
 using System.Threading.Tasks;
+using Android;
+using Android.Content.PM;
 
 namespace VoiceAndroidApp
 {
@@ -25,6 +26,7 @@ namespace VoiceAndroidApp
         private const string STTORTPath = "stt_en_conv_base_ctc-20210619.all.ort";
         private const string TTSAlignORTPath = "ttsalign_en_conv_base-20210808.all.ort";
         private const string TTSAudioORTPath = "ttsaudio_en_conv_base-20210811.all.ort";
+        private const int RecordAudioPermission = 1;
 
         protected bool _isRecording;
         private Thread _recordingThread;
@@ -152,10 +154,45 @@ namespace VoiceAndroidApp
 
         private void StartRecordingClick(object sender, EventArgs e)
         {
-            _startRecordButton.Enabled = false;
-            _stopRecordButton.Enabled = true;
-            _startPlayButton.Enabled = true;
+            if (CheckSelfPermission(Manifest.Permission.RecordAudio) != Permission.Granted)
+            {
+                RequestPermissions(
+                   new[] { Manifest.Permission.RecordAudio },
+                   RecordAudioPermission);
+            }
+            else
+            {
+                StartRecording();
+                UpdateButtons();
+            }
+        }
 
+        public override void OnRequestPermissionsResult(
+            int requestCode,
+            string[] permissions,
+            Permission[] grantResults)
+        {
+            switch (requestCode)
+            {
+                case RecordAudioPermission:
+                    if (grantResults.Length > 0 && grantResults[0] == Permission.Granted)
+                    {
+                        StartRecording();
+                        UpdateButtons();
+                    }
+                    else
+                    {
+                        Android.Widget.Toast.MakeText(
+                            this,
+                            Resource.String.audio_recording_permission_denied,
+                            Android.Widget.ToastLength.Long).Show();
+                    }
+                    break;
+            }
+        }
+
+        private void StartRecording()
+        {
             _audioRecorder = new AudioRecord(
                 AudioSource.Mic,
                 SampleRate,
@@ -192,6 +229,12 @@ namespace VoiceAndroidApp
             _recordingThread.Start();
         }
 
+        private void StopRecordingClick(object sender, EventArgs e)
+        {
+            StopRecording();
+            UpdateButtons();
+        }
+
         private void StopRecording()
         {
             if (_isRecording)
@@ -204,17 +247,12 @@ namespace VoiceAndroidApp
             }
         }
 
-        private void StopRecordingClick(object sender, EventArgs e)
-        {
-            StopRecording();
-            UpdateButtons();
-        }
-
         private void StartPlayingClick(object sender, EventArgs e)
         {
             int OutputBufferSizeInBytes = 10 * 1024;
 
             string text = _inputTextEditText.Text;
+
 
             var audioTrack = new AudioTrack.Builder()
                      .SetAudioAttributes(new AudioAttributes.Builder()
@@ -294,13 +332,6 @@ namespace VoiceAndroidApp
             catch (Exception)
             {
             }
-        }
-
-        public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
-        {
-            Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
-
-            base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
         }
 	}
 }
