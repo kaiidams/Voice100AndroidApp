@@ -19,9 +19,8 @@ namespace Voice100Sharp
         const int SampleRate = 16000;
         const int AudioBytesBufferLength = 10 * SampleRate * sizeof(short);
         const int VadWindowLength = 160;
-        const double VoicedDecibelThreshold = -30.0;
-        const double VoicedDecibelMinThreshold = -30.0;
-        const double VoicedDecibelMaxThreshold = 0.0;
+        const double VoicedDecibelMinThreshold = -60.0;
+        const double UnvoicedDecibelMaxThreshold = -30.0;
         const double ActivateThreshold = 0.7;
         const double DeactivateThreshold = 0.2;
         const int MinRepeatVoicedCount = 10;
@@ -52,8 +51,8 @@ namespace Voice100Sharp
             _audioBytesBufferWriteOffset = 0;
             _audioBufferVadOffset = 0;
             _audioLevelExpMovingAverage = 0.0;
-            _unvoicedAverageDecibel = VoicedDecibelThreshold;
-            _voicedAverageDecibel = VoicedDecibelThreshold;
+            _unvoicedAverageDecibel = UnvoicedDecibelMaxThreshold;
+            _voicedAverageDecibel = UnvoicedDecibelMaxThreshold;
             _voicedRepeatCount = 0;
             _audioBufferActiveOffset = 0;
         }
@@ -140,20 +139,20 @@ namespace Voice100Sharp
 
             double audioDecibel = AudioDecibel;
 
+            // Audio is voiced when the decibel is more than the average of unvoiced average
+            // decibel and voiced average decibel.
             _isVoiced = 2 * audioDecibel > _unvoicedAverageDecibel + _voicedAverageDecibel;
             if (_isVoiced)
             {
-                _voicedAverageDecibel = Math.Clamp(
+                _voicedAverageDecibel = Math.Max(
                     _voicedAverageDecibel * 0.9 + audioDecibel * 0.1,
-                    VoicedDecibelThreshold,
-                    VoicedDecibelMaxThreshold);
+                    VoicedDecibelMinThreshold);
             }
             else
             {
-                _unvoicedAverageDecibel = Math.Clamp(
+                _unvoicedAverageDecibel = Math.Min(
                     _unvoicedAverageDecibel * 0.9 + audioDecibel * 0.1,
-                    VoicedDecibelMinThreshold,
-                    VoicedDecibelThreshold);
+                    UnvoicedDecibelMaxThreshold);
             }
         }
 
