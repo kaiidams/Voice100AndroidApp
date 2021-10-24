@@ -7,4 +7,5 @@
   <string name="stop_playing">Stop playing</string>
   <string name="default_input_text">Please type here and click the button to speak.</string>
   <string name="audio_recording_permission_denied">Permission to use microphone denied.</string>
+  <string name="not_implemented">Not implemented.</string>
 </resources>

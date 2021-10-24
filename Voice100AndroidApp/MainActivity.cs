@@ -106,6 +106,7 @@ namespace Voice100AndroidApp
             base.OnPause();
             StopRecording();
             StopPlaying();
+            UpdateButtons();
         }
 
         private void UpdateButtons()
@@ -253,7 +254,6 @@ namespace Voice100AndroidApp
 
             string text = _inputTextEditText.Text;
 
-
             var audioTrack = new AudioTrack.Builder()
                      .SetAudioAttributes(new AudioAttributes.Builder()
                               .SetUsage(AudioUsageKind.Assistant)
@@ -261,7 +261,7 @@ namespace Voice100AndroidApp
                               .Build())
                      .SetAudioFormat(new AudioFormat.Builder()
                              .SetEncoding(Encoding.Pcm16bit)
-                             .SetSampleRate(16000)
+                             .SetSampleRate(SampleRate)
                              .SetChannelMask(ChannelOut.Mono)
                              .Build())
                      .SetBufferSizeInBytes(OutputBufferSizeInBytes)
@@ -271,10 +271,12 @@ namespace Voice100AndroidApp
             _playingThread = new Thread(() =>
             {
                 var y = _tts.Speak(text);
-                while (true)
+                for (int i = 0; i < y.Length && _isPlaying;)
                 {
-                    int len = audioTrack.Write(y, 0, y.Length);
-                    break;
+                    int bytesToWrite = Math.Min(y.Length - i, 4096);
+                    int bytesWritten = audioTrack.Write(y, i, bytesToWrite);
+                    if (bytesWritten < 0) break;
+                    i += bytesWritten;
                 }
 
                 RunOnUiThread(() =>
@@ -316,6 +318,10 @@ namespace Voice100AndroidApp
             int id = item.ItemId;
             if (id == Resource.Id.action_settings)
             {
+                Android.Widget.Toast.MakeText(
+                    this,
+                    Resource.String.not_implemented,
+                    Android.Widget.ToastLength.Long).Show();
                 return true;
             }
 
