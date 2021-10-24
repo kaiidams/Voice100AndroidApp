@@ -8,6 +8,8 @@ on [Xamarin](https://dotnet.microsoft.com/apps/xamarin).
 Inference of Voice100 is low cost as its models are tiny and only depend
 on CNN without recursion.
 
+[Download sample audio](sample.wav)
+
 ![Voice100 Android App](voice100androidapp.png)
 
 ## Building
