@@ -7,7 +7,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Voice100Sharp
 {
@@ -25,6 +24,7 @@ namespace Voice100Sharp
         const double DeactivateThreshold = 0.2;
         const int MinRepeatVoicedCount = 10;
 
+        private readonly Encoder _encoder;
         private readonly InferenceSession _inferSess;
         private readonly AudioFeatureExtractor _featureExtractor;
 
@@ -46,6 +46,7 @@ namespace Voice100Sharp
 
         private SpeechRecognizer()
         {
+            _encoder = new Encoder();
             _featureExtractor = new AudioFeatureExtractor();
             _audioBytesBuffer = new byte[AudioBytesBufferLength];
             _audioBytesBufferWriteOffset = 0;
@@ -249,17 +250,16 @@ namespace Voice100Sharp
 
         private void AnalyzeAudio(short[] audio, float[] melspec)
         {
-            const string vocab = "_ abcdefghijklmnopqrstuvwxyz'";
             var container = new List<NamedOnnxValue>();
             int[] melspecLength = new int[1] { melspec.Length };
             var audioData = new DenseTensor<float>(melspec, new int[3] { 1, melspec.Length / 64, 64 });
-            container.Add(NamedOnnxValue.CreateFromTensor<float>("audio", audioData));
+            container.Add(NamedOnnxValue.CreateFromTensor("audio", audioData));
             var res = _inferSess.Run(container, new string[] { "logits" });
             foreach (var score in res)
             {
-                string pred = "";
                 var s = score.AsTensor<float>();
-                for (int l = 0; l < s.Dimensions[1]; l++)
+                long[] pred = new long[s.Dimensions[1]];
+                for (int l = 0; l < pred.Length; l++)
                 {
                     int k = -1;
                     float m = -10000.0f;
@@ -271,11 +271,13 @@ namespace Voice100Sharp
                             m = s[0, l, j];
                         }
                     }
-                    pred += vocab[k];
+                    pred[l] = k;
                 }
-                pred = Regex.Replace(pred, @"(.)\1+", @"$1").Replace("_", "");
-                //Console.WriteLine(pred);
-                OnSpeechRecognition(audio, melspec, pred);
+
+                string text = _encoder.Decode(pred);
+                text = _encoder.MergeRepeated(text);
+
+                OnSpeechRecognition(audio, melspec, text);
             }
         }
 

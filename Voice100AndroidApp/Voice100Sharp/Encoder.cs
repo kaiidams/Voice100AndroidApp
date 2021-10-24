@@ -39,5 +39,22 @@ namespace Voice100Sharp
             }
             return encoded.AsSpan(0, j).ToArray();
         }
+
+        public string Decode(long[] encoded)
+        {
+            char[] chars = new char[encoded.Length];
+            for (int i = 0; i < chars.Length; i++)
+            {
+                long index = encoded[i];
+                if (index < 0 || index >= _i2v.Length) index = 0;
+                chars[i] = _i2v[(int)index];
+            }
+            return new string(chars);
+        }
+
+        public string MergeRepeated(string text)
+        {
+            return Regex.Replace(text, @"(.)\1+", @"$1").Replace("_", "");
+        }
     }
 }
