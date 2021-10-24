@@ -1,10 +1,4 @@
-﻿using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
-using Microsoft.ML.OnnxRuntime;
+﻿using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using System;
 using System.Collections.Generic;
@@ -14,14 +8,14 @@ using System.Text;
 
 namespace Voice100Sharp
 {
-    public class TTS
+    public class SpeechSynthesizer
     {
         private readonly Encoder _encoder;
         private readonly Vocoder _vocoder;
         private readonly InferenceSession _ttsAlignInferSess;
         private readonly InferenceSession _ttsAudioInferSess;
 
-        public TTS(byte[] ttsAlignORTModel, byte[] ttsAudioORTModel)
+        public SpeechSynthesizer(byte[] ttsAlignORTModel, byte[] ttsAudioORTModel)
         {
             _encoder = new Encoder();
             _vocoder = new Vocoder();

@@ -43,8 +43,8 @@ namespace Voice100AndroidApp
         private AppCompatTextView _magnitudeText;
         private AppCompatTextView _recognitionText;
         private AppCompatEditText _inputTextEditText;
-        private STTSession _voiceSession;
-        private TTS _tts;
+        private SpeechRecognizer _voiceSession;
+        private SpeechSynthesizer _tts;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -75,18 +75,18 @@ namespace Voice100AndroidApp
             _inputTextEditText = FindViewById<AppCompatEditText>(Resource.Id.input_text);
 
             byte[] ortData = ReadAssetInBytes(STTORTPath);
-            _voiceSession = new STTSession(ortData);
+            _voiceSession = new SpeechRecognizer(ortData);
             _voiceSession.OnDebugInfo += OnDebugInfo;
             _voiceSession.OnSpeechRecognition = OnSpeechRecognition;
             _tts = CreateTTS();
             UpdateButtons();
         }
 
-        private TTS CreateTTS()
+        private SpeechSynthesizer CreateTTS()
         {
             byte[] ttsAlignORTModel = ReadAssetInBytes(TTSAlignORTPath);
             byte[] ttsAudioORTModel = ReadAssetInBytes(TTSAudioORTPath);
-            return new TTS(ttsAlignORTModel, ttsAudioORTModel);
+            return new SpeechSynthesizer(ttsAlignORTModel, ttsAudioORTModel);
         }
 
         private byte[] ReadAssetInBytes(string fileName)
