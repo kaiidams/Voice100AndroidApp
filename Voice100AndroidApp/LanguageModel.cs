@@ -9,7 +9,7 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 
 namespace Voice100AndroidApp
 {
-    public class LanguageModelSession : IDisposable
+    public class LanguageModel : IDisposable
     {
         private static string[] ReadVocab(string path)
         {
@@ -45,7 +45,7 @@ namespace Voice100AndroidApp
         private readonly DenseTensor<float> _h0;
         private readonly DenseTensor<long> _input;
 
-        private LanguageModelSession(double temperature)
+        private LanguageModel(double temperature)
         {
             _random = new Random();
             _temperature = temperature;
@@ -54,7 +54,7 @@ namespace Voice100AndroidApp
             _h0 = new DenseTensor<float>(new float[1300], new int[] { 2, 1, 650 });
         }
 
-        public LanguageModelSession(string modelPath, string vocabPath, double temperature) : this(temperature)
+        public LanguageModel(string modelPath, string vocabPath, double temperature) : this(temperature)
         {
             _i2w = ReadVocab(vocabPath);
             _session = new InferenceSession(modelPath);
@@ -62,7 +62,7 @@ namespace Voice100AndroidApp
             _input[0] = index;
         }
 
-        public LanguageModelSession(byte[] model, string vocab, double temperature) : this(temperature)
+        public LanguageModel(byte[] model, string vocab, double temperature) : this(temperature)
         {
             _i2w = ReadVocabFromString(vocab);
             _session = new InferenceSession(model);

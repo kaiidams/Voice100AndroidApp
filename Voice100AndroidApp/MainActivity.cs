@@ -47,7 +47,7 @@ namespace Voice100AndroidApp
         private AppCompatEditText _inputTextEditText;
         private SpeechRecognizer _speechRecognizer;
         private SpeechSynthesizer _speechSynthesizer;
-        private LanguageModelSession _languageModelSession;
+        private LanguageModel _languageModel;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -82,7 +82,7 @@ namespace Voice100AndroidApp
             _speechRecognizer.OnDebugInfo += OnDebugInfo;
             _speechRecognizer.OnSpeechRecognition = OnSpeechRecognition;
             _speechSynthesizer = CreateTTS();
-            _languageModelSession = CreateLanguageModel();
+            _languageModel = CreateLanguageModel();
             UpdateButtons();
         }
 
@@ -93,7 +93,7 @@ namespace Voice100AndroidApp
             return new SpeechSynthesizer(ttsAlignORTModel, ttsAudioORTModel);
         }
 
-        private LanguageModelSession CreateLanguageModel()
+        private LanguageModel CreateLanguageModel()
         {
             byte[] model = ReadAssetInBytes(LanguageModelPath);
             string vocab;
@@ -101,7 +101,7 @@ namespace Voice100AndroidApp
             {
                 vocab = reader.ReadToEnd();
             }
-            return new LanguageModelSession(model, vocab, 0.8);
+            return new LanguageModel(model, vocab, 0.8);
         }
 
         private byte[] ReadAssetInBytes(string fileName)
@@ -285,7 +285,7 @@ namespace Voice100AndroidApp
 
             _playingThread = new Thread(() =>
             {
-                text = _languageModelSession.Predict(100);
+                text = _languageModel.Predict(100);
 
                 var y = _speechSynthesizer.Speak(text);
                 for (int i = 0; i < y.Length && _isPlaying;)

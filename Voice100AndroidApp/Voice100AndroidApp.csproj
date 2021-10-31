@@ -78,7 +78,7 @@
     <Compile Include="MagmaColorMap.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Voice100Sharp\Encoder.cs" />
-    <Compile Include="LanguageModelSession.cs" />
+    <Compile Include="LanguageModel.cs" />
     <Compile Include="Voice100Sharp\SpeechSynthesizer.cs" />
     <Compile Include="Voice100Sharp\Vocoder.cs" />
     <Compile Include="Voice100Sharp\SpeechRecognizer.cs" />
