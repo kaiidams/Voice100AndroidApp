@@ -45,6 +45,7 @@ namespace Voice100AndroidApp
         private AppCompatTextView _magnitudeText;
         private AppCompatTextView _recognitionText;
         private AppCompatEditText _inputTextEditText;
+        private SwitchCompat _randomSwitch;
         private SpeechRecognizer _speechRecognizer;
         private SpeechSynthesizer _speechSynthesizer;
         private LanguageModel _languageModel;
@@ -76,6 +77,7 @@ namespace Voice100AndroidApp
             _stopPlayButton.Click += StopPlayingClick;
 
             _inputTextEditText = FindViewById<AppCompatEditText>(Resource.Id.input_text);
+            _randomSwitch = FindViewById<SwitchCompat>(Resource.Id.random_text);
 
             byte[] ortData = ReadAssetInBytes(STTORTPath);
             _speechRecognizer = new SpeechRecognizer(ortData);
@@ -267,6 +269,7 @@ namespace Voice100AndroidApp
         {
             int OutputBufferSizeInBytes = 10 * 1024;
 
+            bool randomize = _randomSwitch.Checked;
             string text = _inputTextEditText.Text;
 
             var audioTrack = new AudioTrack.Builder()
@@ -285,7 +288,14 @@ namespace Voice100AndroidApp
 
             _playingThread = new Thread(() =>
             {
-                text = _languageModel.Predict(100);
+                if (randomize)
+                {
+                    text = _languageModel.Predict(20);
+                    RunOnUiThread(() =>
+                    {
+                        _inputTextEditText.Text = text;
+                    });
+                }
 
                 var y = _speechSynthesizer.Speak(text);
                 for (int i = 0; i < y.Length && _isPlaying;)
