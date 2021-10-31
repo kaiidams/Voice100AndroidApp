@@ -26,6 +26,8 @@ namespace Voice100AndroidApp
         private const string STTORTPath = "stt_en_conv_base_ctc-20210619.all.ort";
         private const string TTSAlignORTPath = "ttsalign_en_conv_base-20210808.all.ort";
         private const string TTSAudioORTPath = "ttsaudio_en_conv_base-20210811.all.ort";
+        private const string LanguageModelPath = "lstm.all.ort";
+        private const string VocabPath = "vocab.txt";
         private const int RecordAudioPermission = 1;
 
         protected bool _isRecording;
@@ -43,8 +45,9 @@ namespace Voice100AndroidApp
         private AppCompatTextView _magnitudeText;
         private AppCompatTextView _recognitionText;
         private AppCompatEditText _inputTextEditText;
-        private SpeechRecognizer _voiceSession;
-        private SpeechSynthesizer _tts;
+        private SpeechRecognizer _speechRecognizer;
+        private SpeechSynthesizer _speechSynthesizer;
+        private LanguageModelSession _languageModelSession;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -75,10 +78,11 @@ namespace Voice100AndroidApp
             _inputTextEditText = FindViewById<AppCompatEditText>(Resource.Id.input_text);
 
             byte[] ortData = ReadAssetInBytes(STTORTPath);
-            _voiceSession = new SpeechRecognizer(ortData);
-            _voiceSession.OnDebugInfo += OnDebugInfo;
-            _voiceSession.OnSpeechRecognition = OnSpeechRecognition;
-            _tts = CreateTTS();
+            _speechRecognizer = new SpeechRecognizer(ortData);
+            _speechRecognizer.OnDebugInfo += OnDebugInfo;
+            _speechRecognizer.OnSpeechRecognition = OnSpeechRecognition;
+            _speechSynthesizer = CreateTTS();
+            _languageModelSession = CreateLanguageModel();
             UpdateButtons();
         }
 
@@ -87,6 +91,17 @@ namespace Voice100AndroidApp
             byte[] ttsAlignORTModel = ReadAssetInBytes(TTSAlignORTPath);
             byte[] ttsAudioORTModel = ReadAssetInBytes(TTSAudioORTPath);
             return new SpeechSynthesizer(ttsAlignORTModel, ttsAudioORTModel);
+        }
+
+        private LanguageModelSession CreateLanguageModel()
+        {
+            byte[] model = ReadAssetInBytes(LanguageModelPath);
+            string vocab;
+            using (var reader = new StreamReader(Assets.Open(VocabPath)))
+            {
+                vocab = reader.ReadToEnd();
+            }
+            return new LanguageModelSession(model, vocab, 0.8);
         }
 
         private byte[] ReadAssetInBytes(string fileName)
@@ -217,7 +232,7 @@ namespace Voice100AndroidApp
                         {
                             break;
                         }
-                        _voiceSession.AddAudioBytes(audioBuffer, read);
+                        _speechRecognizer.AddAudioBytes(audioBuffer, read);
                     }
                     catch (Exception ex)
                     {
@@ -270,7 +285,9 @@ namespace Voice100AndroidApp
 
             _playingThread = new Thread(() =>
             {
-                var y = _tts.Speak(text);
+                text = _languageModelSession.Predict(100);
+
+                var y = _speechSynthesizer.Speak(text);
                 for (int i = 0; i < y.Length && _isPlaying;)
                 {
                     int bytesToWrite = Math.Min(y.Length - i, 4096);
