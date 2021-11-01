@@ -8,4 +8,5 @@
   <string name="default_input_text">Please type here and click the button to speak.</string>
   <string name="audio_recording_permission_denied">Permission to use microphone denied.</string>
   <string name="not_implemented">Not implemented.</string>
+  <string name="random_text">Random text</string>
 </resources>

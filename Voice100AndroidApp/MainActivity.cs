@@ -15,6 +15,7 @@ using Xamarin.Essentials;
 using System.Threading.Tasks;
 using Android;
 using Android.Content.PM;
+using System.Collections.Concurrent;
 
 namespace Voice100AndroidApp
 {
@@ -45,8 +46,10 @@ namespace Voice100AndroidApp
         private AppCompatTextView _magnitudeText;
         private AppCompatTextView _recognitionText;
         private AppCompatEditText _inputTextEditText;
+        private SwitchCompat _randomSwitch;
         private SpeechRecognizer _speechRecognizer;
         private SpeechSynthesizer _speechSynthesizer;
+        private LanguageModel _languageModel;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -75,12 +78,14 @@ namespace Voice100AndroidApp
             _stopPlayButton.Click += StopPlayingClick;
 
             _inputTextEditText = FindViewById<AppCompatEditText>(Resource.Id.input_text);
+            _randomSwitch = FindViewById<SwitchCompat>(Resource.Id.random_text);
 
             byte[] ortData = ReadAssetInBytes(STTORTPath);
             _speechRecognizer = new SpeechRecognizer(ortData);
             _speechRecognizer.OnDebugInfo += OnDebugInfo;
             _speechRecognizer.OnSpeechRecognition = OnSpeechRecognition;
             _speechSynthesizer = CreateTTS();
+            _languageModel = CreateLanguageModel();
             UpdateButtons();
         }
 
@@ -89,6 +94,17 @@ namespace Voice100AndroidApp
             byte[] ttsAlignORTModel = ReadAssetInBytes(TTSAlignORTPath);
             byte[] ttsAudioORTModel = ReadAssetInBytes(TTSAudioORTPath);
             return new SpeechSynthesizer(ttsAlignORTModel, ttsAudioORTModel);
+        }
+
+        private LanguageModel CreateLanguageModel()
+        {
+            byte[] model = ReadAssetInBytes(LanguageModelPath);
+            string vocab;
+            using (var reader = new StreamReader(Assets.Open(VocabPath)))
+            {
+                vocab = reader.ReadToEnd();
+            }
+            return new LanguageModel(model, vocab, 0.8);
         }
 
         private byte[] ReadAssetInBytes(string fileName)
@@ -254,6 +270,8 @@ namespace Voice100AndroidApp
         {
             int OutputBufferSizeInBytes = 10 * 1024;
 
+            bool randomize = _randomSwitch.Checked;
+            bool repeat = randomize;
             string text = _inputTextEditText.Text;
 
             var audioTrack = new AudioTrack.Builder()
@@ -270,16 +288,50 @@ namespace Voice100AndroidApp
                      .Build();
             audioTrack.Play();
 
+            var queue = new BlockingCollection<Tuple<string, byte[]>>(2);
+
+            var _inferThread = new Thread(() => 
+            {
+                do
+                {
+                    string newText = text;
+
+                    if (randomize)
+                    {
+                        newText = _languageModel.Predict(15).Trim();
+                    }
+
+                    var y = _speechSynthesizer.Speak(newText);
+
+                    queue.Add(new Tuple<string, byte[]>(newText, y));
+                }
+                while (repeat && _isPlaying);
+            });
+
             _playingThread = new Thread(() =>
             {
-                var y = _speechSynthesizer.Speak(text);
-                for (int i = 0; i < y.Length && _isPlaying;)
+                do
                 {
-                    int bytesToWrite = Math.Min(y.Length - i, 4096);
-                    int bytesWritten = audioTrack.Write(y, i, bytesToWrite);
-                    if (bytesWritten < 0) break;
-                    i += bytesWritten;
+                    var item = queue.Take();
+                    byte[] y = item.Item2;
+
+                    if (randomize)
+                    {
+                        RunOnUiThread(() =>
+                        {
+                            _inputTextEditText.Text = item.Item1;
+                        });
+                    }
+
+                    for (int i = 0; i < y.Length && _isPlaying;)
+                    {
+                        int bytesToWrite = Math.Min(y.Length - i, 4096);
+                        int bytesWritten = audioTrack.Write(y, i, bytesToWrite);
+                        if (bytesWritten < 0) break;
+                        i += bytesWritten;
+                    }
                 }
+                while (randomize && _isPlaying);
 
                 RunOnUiThread(() =>
                 {
@@ -289,6 +341,7 @@ namespace Voice100AndroidApp
             });
 
             _isPlaying = true;
+            _inferThread.Start();
             _playingThread.Start();
             UpdateButtons();
         }
