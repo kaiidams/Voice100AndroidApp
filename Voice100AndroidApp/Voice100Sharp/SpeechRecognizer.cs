@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Voice100Sharp
 {
-    public class SpeechRecognizer
+    public class SpeechRecognizer : IDisposable
     {
         public delegate void DebugInfoEvent(string text);
         public delegate void SpeechRecognitionEvent(short[] audio, float[] melspec, string text);
@@ -25,7 +25,7 @@ namespace Voice100Sharp
         const int MinRepeatVoicedCount = 10;
 
         private readonly Encoder _encoder;
-        private readonly InferenceSession _inferSess;
+        private InferenceSession _inferSess;
         private readonly AudioFeatureExtractor _featureExtractor;
 
         private byte[] _audioBytesBuffer;
@@ -254,7 +254,7 @@ namespace Voice100Sharp
             int[] melspecLength = new int[1] { melspec.Length };
             var audioData = new DenseTensor<float>(melspec, new int[3] { 1, melspec.Length / 64, 64 });
             container.Add(NamedOnnxValue.CreateFromTensor("audio", audioData));
-            var res = _inferSess.Run(container, new string[] { "logits" });
+            using var res = _inferSess.Run(container, new string[] { "logits" });
             foreach (var score in res)
             {
                 var s = score.AsTensor<float>();
@@ -312,6 +312,21 @@ namespace Voice100Sharp
             }
 
             return zeroCrossCount;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing && _inferSess != null)
+            {
+                _inferSess.Dispose();
+                _inferSess = null;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }
