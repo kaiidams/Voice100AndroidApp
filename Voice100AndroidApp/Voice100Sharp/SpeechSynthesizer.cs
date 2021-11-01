@@ -8,12 +8,12 @@ using System.Text;
 
 namespace Voice100Sharp
 {
-    public class SpeechSynthesizer
+    public class SpeechSynthesizer : IDisposable
     {
         private readonly Encoder _encoder;
         private readonly Vocoder _vocoder;
-        private readonly InferenceSession _ttsAlignInferSess;
-        private readonly InferenceSession _ttsAudioInferSess;
+        private InferenceSession _ttsAlignInferSess;
+        private InferenceSession _ttsAudioInferSess;
 
         public SpeechSynthesizer(byte[] ttsAlignORTModel, byte[] ttsAudioORTModel)
         {
@@ -21,6 +21,28 @@ namespace Voice100Sharp
             _vocoder = new Vocoder();
             _ttsAlignInferSess = new InferenceSession(ttsAlignORTModel);
             _ttsAudioInferSess = new InferenceSession(ttsAudioORTModel);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (_ttsAlignInferSess != null)
+                {
+                    _ttsAlignInferSess.Dispose();
+                    _ttsAlignInferSess = null;
+                }
+                if (_ttsAudioInferSess != null)
+                {
+                    _ttsAudioInferSess.Dispose();
+                    _ttsAudioInferSess = null;
+                }
+            }
+        }
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         public byte[] Speak(string text)
@@ -36,7 +58,7 @@ namespace Voice100Sharp
             var container = new List<NamedOnnxValue>();
             var encodedData = new DenseTensor<long>(encoded, new int[2] { 1, encoded.Length });
             container.Add(NamedOnnxValue.CreateFromTensor("text", encodedData));
-            var res = _ttsAlignInferSess.Run(container, new string[] { "align" });
+            using var res = _ttsAlignInferSess.Run(container, new string[] { "align" });
             var logAlign = res.First().AsTensor<float>();
             var align = new double[logAlign.Dimensions[1], 2];
             for (int i = 0; i < align.GetLength(0); i++)
@@ -77,10 +99,11 @@ namespace Voice100Sharp
             var container = new List<NamedOnnxValue>();
             var alignedData = new DenseTensor<long>(aligned, new int[2] { 1, aligned.Length });
             container.Add(NamedOnnxValue.CreateFromTensor("aligntext", alignedData));
-            var res = _ttsAudioInferSess.Run(container, new string[] { "f0", "logspc", "codeap" }).ToArray();
-            float[] f0 = res[0].AsTensor<float>().ToArray();
-            float[] logspc = res[1].AsTensor<float>().ToArray();
-            float[] codeap = res[2].AsTensor<float>().ToArray();
+            using var output = _ttsAudioInferSess.Run(container, new string[] { "f0", "logspc", "codeap" });
+            var outputArray = output.ToArray();
+            float[] f0 = outputArray[0].AsTensor<float>().ToArray();
+            float[] logspc = outputArray[1].AsTensor<float>().ToArray();
+            float[] codeap = outputArray[2].AsTensor<float>().ToArray();
             return _vocoder.Decode(f0, logspc, codeap);
         }
     }
