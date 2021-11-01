@@ -270,6 +270,7 @@ namespace Voice100AndroidApp
             int OutputBufferSizeInBytes = 10 * 1024;
 
             bool randomize = _randomSwitch.Checked;
+            bool repeat = randomize;
             string text = _inputTextEditText.Text;
 
             var audioTrack = new AudioTrack.Builder()
@@ -288,23 +289,27 @@ namespace Voice100AndroidApp
 
             _playingThread = new Thread(() =>
             {
-                if (randomize)
+                do
                 {
-                    text = _languageModel.Predict(20);
-                    RunOnUiThread(() =>
+                    if (randomize)
                     {
-                        _inputTextEditText.Text = text;
-                    });
-                }
+                        text = _languageModel.Predict(15).Trim();
+                        RunOnUiThread(() =>
+                        {
+                            _inputTextEditText.Text = text;
+                        });
+                    }
 
-                var y = _speechSynthesizer.Speak(text);
-                for (int i = 0; i < y.Length && _isPlaying;)
-                {
-                    int bytesToWrite = Math.Min(y.Length - i, 4096);
-                    int bytesWritten = audioTrack.Write(y, i, bytesToWrite);
-                    if (bytesWritten < 0) break;
-                    i += bytesWritten;
+                    var y = _speechSynthesizer.Speak(text);
+                    for (int i = 0; i < y.Length && _isPlaying;)
+                    {
+                        int bytesToWrite = Math.Min(y.Length - i, 4096);
+                        int bytesWritten = audioTrack.Write(y, i, bytesToWrite);
+                        if (bytesWritten < 0) break;
+                        i += bytesWritten;
+                    }
                 }
+                while (randomize && _isPlaying);
 
                 RunOnUiThread(() =>
                 {
