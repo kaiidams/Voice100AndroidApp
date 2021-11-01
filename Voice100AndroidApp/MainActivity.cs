@@ -15,6 +15,7 @@ using Xamarin.Essentials;
 using System.Threading.Tasks;
 using Android;
 using Android.Content.PM;
+using System.Collections.Concurrent;
 
 namespace Voice100AndroidApp
 {
@@ -287,20 +288,41 @@ namespace Voice100AndroidApp
                      .Build();
             audioTrack.Play();
 
+            var queue = new BlockingCollection<Tuple<string, byte[]>>(2);
+
+            var _inferThread = new Thread(() => 
+            {
+                do
+                {
+                    string newText = text;
+
+                    if (randomize)
+                    {
+                        newText = _languageModel.Predict(15).Trim();
+                    }
+
+                    var y = _speechSynthesizer.Speak(newText);
+
+                    queue.Add(new Tuple<string, byte[]>(newText, y));
+                }
+                while (repeat && _isPlaying);
+            });
+
             _playingThread = new Thread(() =>
             {
                 do
                 {
+                    var item = queue.Take();
+                    byte[] y = item.Item2;
+
                     if (randomize)
                     {
-                        text = _languageModel.Predict(15).Trim();
                         RunOnUiThread(() =>
                         {
-                            _inputTextEditText.Text = text;
+                            _inputTextEditText.Text = item.Item1;
                         });
                     }
 
-                    var y = _speechSynthesizer.Speak(text);
                     for (int i = 0; i < y.Length && _isPlaying;)
                     {
                         int bytesToWrite = Math.Min(y.Length - i, 4096);
@@ -319,6 +341,7 @@ namespace Voice100AndroidApp
             });
 
             _isPlaying = true;
+            _inferThread.Start();
             _playingThread.Start();
             UpdateButtons();
         }
