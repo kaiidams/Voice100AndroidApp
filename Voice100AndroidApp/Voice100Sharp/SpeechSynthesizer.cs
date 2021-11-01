@@ -48,6 +48,7 @@ namespace Voice100Sharp
         public byte[] Speak(string text)
         {
             long[] encoded = _encoder.Encode(text);
+            if (encoded.Length == 0) return new byte[0];
             long[] aligned = Align(encoded);
             var y = Predict(aligned);
             return MemoryMarshal.Cast<short, byte>(y).ToArray();
