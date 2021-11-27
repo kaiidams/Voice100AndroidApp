@@ -23,11 +23,9 @@ namespace Voice100AndroidApp
     {
         private const int SampleRate = 16000;
         private const int AudioBufferLength = 4096; // 256 msec
-        private const string STTORTPath = "stt_en_conv_base_ctc-20210619.all.ort";
+        private const string STTORTPath = "stt_en_conv_base_ctc-20211125.all.ort";
         private const string TTSAlignORTPath = "ttsalign_en_conv_base-20210808.all.ort";
         private const string TTSAudioORTPath = "ttsaudio_en_conv_base-20210811.all.ort";
-        private const string LanguageModelPath = "lstm.all.ort";
-        private const string VocabPath = "vocab.txt";
         private const int RecordAudioPermission = 1;
 
         protected bool _isRecording;
