@@ -23,9 +23,6 @@ namespace Voice100AndroidApp
     {
         private const int SampleRate = 16000;
         private const int AudioBufferLength = 4096; // 256 msec
-        private const string STTORTPath = "stt_en_conv_base_ctc-20211125.all.ort";
-        private const string TTSAlignORTPath = "ttsalign_en_conv_base-20210808.all.ort";
-        private const string TTSAudioORTPath = "ttsaudio_en_conv_base-20210811.all.ort";
         private const int RecordAudioPermission = 1;
 
         protected bool _isRecording;
@@ -74,19 +71,30 @@ namespace Voice100AndroidApp
 
             _inputTextEditText = FindViewById<AppCompatEditText>(Resource.Id.input_text);
 
-            byte[] ortData = ReadAssetInBytes(STTORTPath);
-            _speechRecognizer = new SpeechRecognizer(ortData);
+            _speechRecognizer = CreateSST();
             _speechRecognizer.OnDebugInfo += OnDebugInfo;
             _speechRecognizer.OnSpeechRecognition = OnSpeechRecognition;
             _speechSynthesizer = CreateTTS();
             UpdateButtons();
         }
 
+        private SpeechRecognizer CreateSST()
+        {
+            byte[] ortData = ReadAssetInBytes(Resource.String.sst_ort);
+            return new SpeechRecognizer(ortData);
+        }
+
         private SpeechSynthesizer CreateTTS()
         {
-            byte[] ttsAlignORTModel = ReadAssetInBytes(TTSAlignORTPath);
-            byte[] ttsAudioORTModel = ReadAssetInBytes(TTSAudioORTPath);
+            byte[] ttsAlignORTModel = ReadAssetInBytes(Resource.String.ttsalign_ort);
+            byte[] ttsAudioORTModel = ReadAssetInBytes(Resource.String.ttsaudio_ort);
             return new SpeechSynthesizer(ttsAlignORTModel, ttsAudioORTModel);
+        }
+
+        private byte[] ReadAssetInBytes(int resId)
+        {
+            string path = GetString(resId);
+            return ReadAssetInBytes(path);
         }
 
         private byte[] ReadAssetInBytes(string fileName)

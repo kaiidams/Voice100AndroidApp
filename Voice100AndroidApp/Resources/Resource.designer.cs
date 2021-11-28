@@ -4626,19 +4626,28 @@ namespace Voice100AndroidApp
 			public const int search_menu_title = 2131623985;
 			
 			// aapt resource value: 0x7F0E0032
-			public const int start_playing = 2131623986;
+			public const int sst_ort = 2131623986;
 			
 			// aapt resource value: 0x7F0E0033
-			public const int start_recording = 2131623987;
+			public const int start_playing = 2131623987;
 			
 			// aapt resource value: 0x7F0E0034
-			public const int status_bar_notification_info_overflow = 2131623988;
+			public const int start_recording = 2131623988;
 			
 			// aapt resource value: 0x7F0E0035
-			public const int stop_playing = 2131623989;
+			public const int status_bar_notification_info_overflow = 2131623989;
 			
 			// aapt resource value: 0x7F0E0036
-			public const int stop_recording = 2131623990;
+			public const int stop_playing = 2131623990;
+			
+			// aapt resource value: 0x7F0E0037
+			public const int stop_recording = 2131623991;
+			
+			// aapt resource value: 0x7F0E0038
+			public const int ttsalign_ort = 2131623992;
+			
+			// aapt resource value: 0x7F0E0039
+			public const int ttsaudio_ort = 2131623993;
 			
 			static String()
 			{
