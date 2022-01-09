@@ -15,6 +15,14 @@ namespace Voice100Sharp
         private InferenceSession _ttsAlignInferSess;
         private InferenceSession _ttsAudioInferSess;
 
+        public SpeechSynthesizer(string ttsAlignORTModel, string ttsAudioORTModel)
+        {
+            _encoder = new Encoder();
+            _vocoder = new Vocoder();
+            _ttsAlignInferSess = new InferenceSession(ttsAlignORTModel);
+            _ttsAudioInferSess = new InferenceSession(ttsAudioORTModel);
+        }
+
         public SpeechSynthesizer(byte[] ttsAlignORTModel, byte[] ttsAudioORTModel)
         {
             _encoder = new Encoder();

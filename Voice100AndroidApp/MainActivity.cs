@@ -15,6 +15,8 @@ using Xamarin.Essentials;
 using System.Threading.Tasks;
 using Android;
 using Android.Content.PM;
+using System.Net.Http;
+using System.Collections.Generic;
 
 namespace Voice100AndroidApp
 {
@@ -25,6 +27,44 @@ namespace Voice100AndroidApp
         private const int AudioBufferLength = 4096; // 256 msec
         private const int RecordAudioPermission = 1;
 
+        private const int STT = 0;
+        private const int TTSAlign = 1;
+        private const int TTSAudio = 2;
+        private const int NumModels = 3;
+
+        private static IDictionary<string, ModelInfo[]> ModelInfoDict = new Dictionary<string, ModelInfo[]> {
+            {
+                "en",
+                new ModelInfo[]
+                {
+                    new ModelInfo(
+                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/stt_en_conv_base_ctc-20211125.all.ort",
+                        "stt_en_conv_base_ctc-20211125.all.ort"),
+                    new ModelInfo(
+                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/ttsalign_en_conv_base-20210808.all.ort",
+                        "ttsalign_en_conv_base-20210808.all.ort"),
+                    new ModelInfo(
+                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/ttsaudio_en_conv_base-20210811.all.ort",
+                        "ttsaudio_en_conv_base-20210811.all.ort")
+                }
+            },
+            {
+                "ja",
+                new ModelInfo[]
+                {
+                    new ModelInfo(
+                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/stt_ja_conv_base_ctc-20211127.all.ort",
+                        "stt_ja_conv_base_ctc-20211127.all.ort"),
+                    new ModelInfo(
+                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/ttsalign_ja_conv_base-20211118.all.ort",
+                        "ttsalign_ja_conv_base-20211118.all.ort"),
+                    new ModelInfo(
+                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/ttsaudio_ja_conv_base-20211118.all.ort",
+                        "ttsaudio_ja_conv_base-20211118.all.ort")
+                }
+            }
+        };
+
         protected bool _isRecording;
         private Thread _recordingThread;
         protected bool _isPlaying;
@@ -33,6 +73,7 @@ namespace Voice100AndroidApp
         private SpectrogramView _spectrogramView;
         private GraphView _graphView;
         protected Handler _handler;
+        private AppCompatTextView _statusText;
         private AppCompatButton _startRecordButton;
         private AppCompatButton _stopRecordButton;
         private AppCompatButton _startPlayButton;
@@ -42,12 +83,15 @@ namespace Voice100AndroidApp
         private AppCompatEditText _inputTextEditText;
         private SpeechRecognizer _speechRecognizer;
         private SpeechSynthesizer _speechSynthesizer;
+        private Task _downloadingTask;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
+
+            _statusText = FindViewById<AppCompatTextView>(Resource.Id.status);
 
             Toolbar toolbar = FindViewById<Toolbar>(Resource.Id.toolbar);
             SetSupportActionBar(toolbar);
@@ -71,40 +115,119 @@ namespace Voice100AndroidApp
 
             _inputTextEditText = FindViewById<AppCompatEditText>(Resource.Id.input_text);
 
-            _speechRecognizer = CreateSST();
-            _speechRecognizer.OnDebugInfo += OnDebugInfo;
-            _speechRecognizer.OnSpeechRecognition = OnSpeechRecognition;
-            _speechSynthesizer = CreateTTS();
-            UpdateButtons();
+            _speechRecognizer = null;
+            _speechSynthesizer = null;
         }
 
-        private SpeechRecognizer CreateSST()
+        private string GetModelFilePath(ModelInfo modelInfo)
         {
-            byte[] ortData = ReadAssetInBytes(Resource.String.sst_ort);
-            return new SpeechRecognizer(ortData);
+            return System.IO.Path.Combine(FilesDir.Path, modelInfo.FileName);
+        }
+
+        private string GetModelFilePath(int modelType)
+        {
+            var modelInfo = GetModelInfo(modelType);
+            return GetModelFilePath(modelInfo);
+        }
+
+        private ModelInfo GetModelInfo(int modelType)
+        {
+            string lang = GetString(Resource.String.model_language);
+            return ModelInfoDict[lang][modelType];
+        }
+
+        private SpeechRecognizer CreateSTT()
+        {
+            string filePath = GetModelFilePath(STT);
+            return new SpeechRecognizer(filePath);
         }
 
         private SpeechSynthesizer CreateTTS()
         {
-            byte[] ttsAlignORTModel = ReadAssetInBytes(Resource.String.ttsalign_ort);
-            byte[] ttsAudioORTModel = ReadAssetInBytes(Resource.String.ttsaudio_ort);
-            return new SpeechSynthesizer(ttsAlignORTModel, ttsAudioORTModel);
+            string alignFilePath = GetModelFilePath(TTSAlign);
+            string audioFilePath = GetModelFilePath(TTSAudio);
+            return new SpeechSynthesizer(alignFilePath, audioFilePath);
         }
 
-        private byte[] ReadAssetInBytes(int resId)
+        protected override void OnResume()
         {
-            string path = GetString(resId);
-            return ReadAssetInBytes(path);
-        }
-
-        private byte[] ReadAssetInBytes(string fileName)
-        {
-            using (var input = Assets.Open(fileName))
+            base.OnResume();
+            if (_downloadingTask == null)
             {
-                using (var memoryStream = new MemoryStream())
+                _downloadingTask = Task.Run(DownloadAllModels);
+            }
+            UpdateButtons();
+        }
+
+        private async Task DownloadAllModels()
+        {
+            try
+            {
+                using (var client = new HttpClient())
                 {
-                    input.CopyTo(memoryStream);
-                    return memoryStream.ToArray();
+                    string lang = GetString(Resource.String.model_language);
+                    var modelInfoList = ModelInfoDict[lang];
+                    for (int i = 0; i < NumModels; i++)
+                    {
+                        RunOnUiThread(() =>
+                        {
+                            _statusText.Text = string.Format(
+                                GetString(Resource.String.downloading), i + 1, modelInfoList.Length);
+                        });
+                        await DownloadOneModel(client, modelInfoList[i]);
+                    }
+                }
+                RunOnUiThread(() =>
+                {
+                    OnModelDownloaded();
+                });
+            }
+            catch (Exception ex)
+            {
+                RunOnUiThread(() =>
+                {
+                    _statusText.Text = "Error";
+                });
+            }
+            finally
+            {
+                _downloadingTask = null;
+            }
+        }
+
+        private void OnModelDownloaded()
+        {
+            _speechRecognizer = CreateSTT();
+            _speechRecognizer.OnDebugInfo += OnDebugInfo;
+            _speechRecognizer.OnSpeechRecognition = OnSpeechRecognition;
+            _speechSynthesizer = CreateTTS();
+            _statusText.Text = "";
+            UpdateButtons();
+        }
+
+        private async Task DownloadOneModel(HttpClient client, ModelInfo modelInfo)
+        {
+            string filePath = GetModelFilePath(modelInfo);
+            if (!File.Exists(filePath) || new FileInfo(filePath).Length < 1 * 1024 * 1024)
+            {
+                try
+                {
+                    using (var writer = File.OpenWrite(filePath))
+                    {
+                        using (var response = await client.GetAsync(modelInfo.URL))
+                        {
+                            await response.Content.CopyToAsync(writer);
+                        }
+                    }
+                    if (new FileInfo(filePath).Length < 1 * 1024 * 1024)
+                    {
+                        throw new IOException("File is too small.");
+                    }
+                }
+                catch (IOException)
+                {
+                    File.Delete(filePath);
+                    throw;
                 }
             }
         }
@@ -119,10 +242,10 @@ namespace Voice100AndroidApp
 
         private void UpdateButtons()
         {
-            _startRecordButton.Enabled = !_isRecording;
-            _stopRecordButton.Enabled = _isRecording;
-            _startPlayButton.Enabled = !_isPlaying;
-            _stopPlayButton.Enabled = _isPlaying;
+            _startRecordButton.Enabled = _speechRecognizer != null && !_isRecording;
+            _stopRecordButton.Enabled = _speechRecognizer != null && _isRecording;
+            _startPlayButton.Enabled = _speechSynthesizer != null && !_isPlaying;
+            _stopPlayButton.Enabled = _speechSynthesizer != null && _isPlaying;
         }
 
         private void OnDebugInfo(string text)
