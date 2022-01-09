@@ -102,10 +102,6 @@
     <AndroidNativeLibrary Include="lib\armeabi-v7a\libvoice100_native.so" />
     <AndroidNativeLibrary Include="lib\x86\libvoice100_native.so" />
     <AndroidNativeLibrary Include="lib\x86_64\libvoice100_native.so" />
-    <AndroidAsset Include="Assets\ttsalign_ja_conv_base-20211118.all.ort" />
-    <AndroidAsset Include="Assets\ttsaudio_ja_conv_base-20211118.all.ort" />
-    <AndroidAsset Include="Assets\ttsalign_en_conv_base-20210808.all.ort" />
-    <AndroidAsset Include="Assets\ttsaudio_en_conv_base-20210811.all.ort" />
     <None Include="Resources\AboutResources.txt" />
     <None Include="Properties\AndroidManifest.xml" />
     <None Include="Assets\AboutAssets.txt" />

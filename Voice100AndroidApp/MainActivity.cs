@@ -53,8 +53,8 @@ namespace Voice100AndroidApp
                 new ModelInfo[]
                 {
                     new ModelInfo(
-                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/stt_ja_conv_base_ctc-20211125.all.ort",
-                        "stt_ja_conv_base_ctc-20211125.all.ort"),
+                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/stt_ja_conv_base_ctc-20211127.all.ort",
+                        "stt_ja_conv_base_ctc-20211127.all.ort"),
                     new ModelInfo(
                         "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/ttsalign_ja_conv_base-20211118.all.ort",
                         "ttsalign_ja_conv_base-20211118.all.ort"),
@@ -84,14 +84,6 @@ namespace Voice100AndroidApp
         private SpeechRecognizer _speechRecognizer;
         private SpeechSynthesizer _speechSynthesizer;
         private Task _downloadingTask;
-
-        private bool IsDownloading
-        {
-            get
-            {
-                return _downloadingTask != null;
-            }
-        }
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -157,32 +149,14 @@ namespace Voice100AndroidApp
             return new SpeechSynthesizer(alignFilePath, audioFilePath);
         }
 
-        private byte[] ReadAssetInBytes(int resId)
-        {
-            string path = GetString(resId);
-            return ReadAssetInBytes(path);
-        }
-
-        private byte[] ReadAssetInBytes(string fileName)
-        {
-            using (var input = Assets.Open(fileName))
-            {
-                using (var memoryStream = new MemoryStream())
-                {
-                    input.CopyTo(memoryStream);
-                    return memoryStream.ToArray();
-                }
-            }
-        }
-
         protected override void OnResume()
         {
             base.OnResume();
-            UpdateButtons();
             if (_downloadingTask == null)
             {
                 _downloadingTask = Task.Run(DownloadAllModels);
             }
+            UpdateButtons();
         }
 
         private async Task DownloadAllModels()
@@ -199,7 +173,6 @@ namespace Voice100AndroidApp
                             GetString(Resource.String.downloading), i + 1, modelInfoList.Length);
                         await DownloadOneModel(client, modelInfoList[i]);
                     }
-                    _statusText.Text = "";
                 }
                 OnModelDownloaded();
             }
@@ -219,6 +192,8 @@ namespace Voice100AndroidApp
             _speechRecognizer.OnDebugInfo += OnDebugInfo;
             _speechRecognizer.OnSpeechRecognition = OnSpeechRecognition;
             _speechSynthesizer = CreateTTS();
+            _statusText.Text = "";
+            UpdateButtons();
         }
 
         private async Task DownloadOneModel(HttpClient client, ModelInfo modelInfo)
@@ -258,10 +233,10 @@ namespace Voice100AndroidApp
 
         private void UpdateButtons()
         {
-            _startRecordButton.Enabled = !IsDownloading && !_isRecording;
-            _stopRecordButton.Enabled = !IsDownloading && _isRecording;
-            _startPlayButton.Enabled = !IsDownloading && !_isPlaying;
-            _stopPlayButton.Enabled = !IsDownloading && _isPlaying;
+            _startRecordButton.Enabled = _speechRecognizer != null && !_isRecording;
+            _stopRecordButton.Enabled = _speechRecognizer != null && _isRecording;
+            _startPlayButton.Enabled = _speechSynthesizer != null && !_isPlaying;
+            _stopPlayButton.Enabled = _speechSynthesizer != null && _isPlaying;
         }
 
         private void OnDebugInfo(string text)
