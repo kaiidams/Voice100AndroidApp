@@ -121,13 +121,13 @@ namespace Voice100AndroidApp
 
         private string GetModelFilePath(ModelInfo modelInfo)
         {
-            return System.IO.Path.Combine(CacheDir.Path, modelInfo.FileName);
+            return System.IO.Path.Combine(FilesDir.Path, modelInfo.FileName);
         }
 
         private string GetModelFilePath(int modelType)
         {
             var modelInfo = GetModelInfo(modelType);
-            return System.IO.Path.Combine(CacheDir.Path, modelInfo.FileName);
+            return GetModelFilePath(modelInfo);
         }
 
         private ModelInfo GetModelInfo(int modelType)
@@ -169,16 +169,25 @@ namespace Voice100AndroidApp
                     var modelInfoList = ModelInfoDict[lang];
                     for (int i = 0; i < NumModels; i++)
                     {
-                        _statusText.Text = string.Format(
-                            GetString(Resource.String.downloading), i + 1, modelInfoList.Length);
+                        RunOnUiThread(() =>
+                        {
+                            _statusText.Text = string.Format(
+                                GetString(Resource.String.downloading), i + 1, modelInfoList.Length);
+                        });
                         await DownloadOneModel(client, modelInfoList[i]);
                     }
                 }
-                OnModelDownloaded();
+                RunOnUiThread(() =>
+                {
+                    OnModelDownloaded();
+                });
             }
             catch (Exception ex)
             {
-                _statusText.Text = "Error";
+                RunOnUiThread(() =>
+                {
+                    _statusText.Text = "Error";
+                });
             }
             finally
             {
