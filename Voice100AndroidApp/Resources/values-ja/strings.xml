@@ -8,7 +8,7 @@
   <string name="default_input_text">kokonibunshooonyuuryokushite botan\'ooshitekudasai</string>
   <string name="audio_recording_permission_denied">マイクの使用許可が拒否されました。</string>
   <string name="not_implemented">未実装です。</string>
-  <string name="sst_ort">stt_ja_conv_base_ctc-20211127.all.ort</string>
-  <string name="ttsalign_ort">ttsalign_ja_conv_base-20211118.all.ort</string>
-  <string name="ttsaudio_ort">ttsaudio_ja_conv_base-20211118.all.ort</string>
+  <string name="model_language">ja</string>
+  <string name="downloading">ダウンロードしています({0} of {1})...</string>
+  <string name="download_fail">ダウンロードに失敗しました。</string>
 </resources>

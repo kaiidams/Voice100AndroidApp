@@ -4583,74 +4583,71 @@ namespace Voice100AndroidApp
 			// aapt resource value: 0x7F0E0023
 			public const int default_input_text = 2131623971;
 			
-			// aapt resource value: 0x7F0E0024
-			public const int downloading = 2131623972;
-			
 			// aapt resource value: 0x7F0E0025
-			public const int fab_transformation_scrim_behavior = 2131623973;
+			public const int downloading = 2131623973;
+			
+			// aapt resource value: 0x7F0E0024
+			public const int download_fail = 2131623972;
 			
 			// aapt resource value: 0x7F0E0026
-			public const int fab_transformation_sheet_behavior = 2131623974;
+			public const int fab_transformation_scrim_behavior = 2131623974;
 			
 			// aapt resource value: 0x7F0E0027
-			public const int fallback_menu_item_copy_link = 2131623975;
+			public const int fab_transformation_sheet_behavior = 2131623975;
 			
 			// aapt resource value: 0x7F0E0028
-			public const int fallback_menu_item_open_in_browser = 2131623976;
+			public const int fallback_menu_item_copy_link = 2131623976;
 			
 			// aapt resource value: 0x7F0E0029
-			public const int fallback_menu_item_share_link = 2131623977;
+			public const int fallback_menu_item_open_in_browser = 2131623977;
 			
 			// aapt resource value: 0x7F0E002A
-			public const int hide_bottom_view_on_scroll_behavior = 2131623978;
+			public const int fallback_menu_item_share_link = 2131623978;
 			
 			// aapt resource value: 0x7F0E002B
-			public const int mtrl_chip_close_icon_content_description = 2131623979;
+			public const int hide_bottom_view_on_scroll_behavior = 2131623979;
 			
 			// aapt resource value: 0x7F0E002C
-			public const int not_implemented = 2131623980;
+			public const int model_language = 2131623980;
 			
 			// aapt resource value: 0x7F0E002D
-			public const int password_toggle_content_description = 2131623981;
+			public const int mtrl_chip_close_icon_content_description = 2131623981;
 			
 			// aapt resource value: 0x7F0E002E
-			public const int path_password_eye = 2131623982;
+			public const int not_implemented = 2131623982;
 			
 			// aapt resource value: 0x7F0E002F
-			public const int path_password_eye_mask_strike_through = 2131623983;
+			public const int password_toggle_content_description = 2131623983;
 			
 			// aapt resource value: 0x7F0E0030
-			public const int path_password_eye_mask_visible = 2131623984;
+			public const int path_password_eye = 2131623984;
 			
 			// aapt resource value: 0x7F0E0031
-			public const int path_password_strike_through = 2131623985;
+			public const int path_password_eye_mask_strike_through = 2131623985;
 			
 			// aapt resource value: 0x7F0E0032
-			public const int search_menu_title = 2131623986;
+			public const int path_password_eye_mask_visible = 2131623986;
 			
 			// aapt resource value: 0x7F0E0033
-			public const int sst_ort = 2131623987;
+			public const int path_password_strike_through = 2131623987;
 			
 			// aapt resource value: 0x7F0E0034
-			public const int start_playing = 2131623988;
+			public const int search_menu_title = 2131623988;
 			
 			// aapt resource value: 0x7F0E0035
-			public const int start_recording = 2131623989;
+			public const int start_playing = 2131623989;
 			
 			// aapt resource value: 0x7F0E0036
-			public const int status_bar_notification_info_overflow = 2131623990;
+			public const int start_recording = 2131623990;
 			
 			// aapt resource value: 0x7F0E0037
-			public const int stop_playing = 2131623991;
+			public const int status_bar_notification_info_overflow = 2131623991;
 			
 			// aapt resource value: 0x7F0E0038
-			public const int stop_recording = 2131623992;
+			public const int stop_playing = 2131623992;
 			
 			// aapt resource value: 0x7F0E0039
-			public const int ttsalign_ort = 2131623993;
-			
-			// aapt resource value: 0x7F0E003A
-			public const int ttsaudio_ort = 2131623994;
+			public const int stop_recording = 2131623993;
 			
 			static String()
 			{

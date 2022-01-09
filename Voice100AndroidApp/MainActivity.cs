@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using Android;
 using Android.Content.PM;
 using System.Net.Http;
+using System.Collections.Generic;
 
 namespace Voice100AndroidApp
 {
@@ -26,10 +27,42 @@ namespace Voice100AndroidApp
         private const int AudioBufferLength = 4096; // 256 msec
         private const int RecordAudioPermission = 1;
 
-        private static ModelInfo[] ModelInfoList = new ModelInfo[] {
-            new ModelInfo(
-                "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/stt_en_conv_base_ctc-20211125.all.ort",
-                "stt_en_conv_base_ctc-20211125.all.ort")
+        private const int STT = 0;
+        private const int TTSAlign = 1;
+        private const int TTSAudio = 2;
+        private const int NumModels = 3;
+
+        private static IDictionary<string, ModelInfo[]> ModelInfoDict = new Dictionary<string, ModelInfo[]> {
+            {
+                "en",
+                new ModelInfo[]
+                {
+                    new ModelInfo(
+                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/stt_en_conv_base_ctc-20211125.all.ort",
+                        "stt_en_conv_base_ctc-20211125.all.ort"),
+                    new ModelInfo(
+                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/ttsalign_en_conv_base-20210808.all.ort",
+                        "ttsalign_en_conv_base-20210808.all.ort"),
+                    new ModelInfo(
+                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/ttsaudio_en_conv_base-20210811.all.ort",
+                        "ttsaudio_en_conv_base-20210811.all.ort")
+                }
+            },
+            {
+                "ja",
+                new ModelInfo[]
+                {
+                    new ModelInfo(
+                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/stt_ja_conv_base_ctc-20211125.all.ort",
+                        "stt_ja_conv_base_ctc-20211125.all.ort"),
+                    new ModelInfo(
+                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/ttsalign_ja_conv_base-20211118.all.ort",
+                        "ttsalign_ja_conv_base-20211118.all.ort"),
+                    new ModelInfo(
+                        "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/ttsaudio_ja_conv_base-20211118.all.ort",
+                        "ttsaudio_ja_conv_base-20211118.all.ort")
+                }
+            }
         };
 
         protected bool _isRecording;
@@ -99,17 +132,29 @@ namespace Voice100AndroidApp
             return System.IO.Path.Combine(CacheDir.Path, modelInfo.FileName);
         }
 
+        private string GetModelFilePath(int modelType)
+        {
+            var modelInfo = GetModelInfo(modelType);
+            return System.IO.Path.Combine(CacheDir.Path, modelInfo.FileName);
+        }
+
+        private ModelInfo GetModelInfo(int modelType)
+        {
+            string lang = GetString(Resource.String.model_language);
+            return ModelInfoDict[lang][modelType];
+        }
+
         private SpeechRecognizer CreateSTT()
         {
-            string filePath = GetModelFilePath(ModelInfoList[0]);
+            string filePath = GetModelFilePath(STT);
             return new SpeechRecognizer(filePath);
         }
 
         private SpeechSynthesizer CreateTTS()
         {
-            byte[] ttsAlignORTModel = ReadAssetInBytes(Resource.String.ttsalign_ort);
-            byte[] ttsAudioORTModel = ReadAssetInBytes(Resource.String.ttsaudio_ort);
-            return new SpeechSynthesizer(ttsAlignORTModel, ttsAudioORTModel);
+            string alignFilePath = GetModelFilePath(TTSAlign);
+            string audioFilePath = GetModelFilePath(TTSAudio);
+            return new SpeechSynthesizer(alignFilePath, audioFilePath);
         }
 
         private byte[] ReadAssetInBytes(int resId)
@@ -146,11 +191,13 @@ namespace Voice100AndroidApp
             {
                 using (var client = new HttpClient())
                 {
-                    for (int i = 0; i < ModelInfoList.Length; i++)
+                    string lang = GetString(Resource.String.model_language);
+                    var modelInfoList = ModelInfoDict[lang];
+                    for (int i = 0; i < NumModels; i++)
                     {
                         _statusText.Text = string.Format(
-                            GetString(Resource.String.downloading), i + 1, ModelInfoList.Length);
-                        await DownloadOneModel(client, ModelInfoList[i]);
+                            GetString(Resource.String.downloading), i + 1, modelInfoList.Length);
+                        await DownloadOneModel(client, modelInfoList[i]);
                     }
                     _statusText.Text = "";
                 }
