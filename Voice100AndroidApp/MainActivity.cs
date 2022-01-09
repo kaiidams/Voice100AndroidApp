@@ -15,6 +15,7 @@ using Xamarin.Essentials;
 using System.Threading.Tasks;
 using Android;
 using Android.Content.PM;
+using System.Net.Http;
 
 namespace Voice100AndroidApp
 {
@@ -25,6 +26,12 @@ namespace Voice100AndroidApp
         private const int AudioBufferLength = 4096; // 256 msec
         private const int RecordAudioPermission = 1;
 
+        private static ModelInfo[] ModelInfoList = new ModelInfo[] {
+            new ModelInfo(
+                "https://github.com/kaiidams/Voice100AndroidApp/releases/download/v0.5/stt_en_conv_base_ctc-20211125.all.ort",
+                "stt_en_conv_base_ctc-20211125.all.ort")
+        };
+
         protected bool _isRecording;
         private Thread _recordingThread;
         protected bool _isPlaying;
@@ -33,6 +40,7 @@ namespace Voice100AndroidApp
         private SpectrogramView _spectrogramView;
         private GraphView _graphView;
         protected Handler _handler;
+        private AppCompatTextView _statusText;
         private AppCompatButton _startRecordButton;
         private AppCompatButton _stopRecordButton;
         private AppCompatButton _startPlayButton;
@@ -42,12 +50,23 @@ namespace Voice100AndroidApp
         private AppCompatEditText _inputTextEditText;
         private SpeechRecognizer _speechRecognizer;
         private SpeechSynthesizer _speechSynthesizer;
+        private Task _downloadingTask;
+
+        private bool IsDownloading
+        {
+            get
+            {
+                return _downloadingTask != null;
+            }
+        }
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
+
+            _statusText = FindViewById<AppCompatTextView>(Resource.Id.status);
 
             Toolbar toolbar = FindViewById<Toolbar>(Resource.Id.toolbar);
             SetSupportActionBar(toolbar);
@@ -71,17 +90,19 @@ namespace Voice100AndroidApp
 
             _inputTextEditText = FindViewById<AppCompatEditText>(Resource.Id.input_text);
 
-            _speechRecognizer = CreateSST();
-            _speechRecognizer.OnDebugInfo += OnDebugInfo;
-            _speechRecognizer.OnSpeechRecognition = OnSpeechRecognition;
-            _speechSynthesizer = CreateTTS();
-            UpdateButtons();
+            _speechRecognizer = null;
+            _speechSynthesizer = null;
         }
 
-        private SpeechRecognizer CreateSST()
+        private string GetModelFilePath(ModelInfo modelInfo)
         {
-            byte[] ortData = ReadAssetInBytes(Resource.String.sst_ort);
-            return new SpeechRecognizer(ortData);
+            return System.IO.Path.Combine(CacheDir.Path, modelInfo.FileName);
+        }
+
+        private SpeechRecognizer CreateSTT()
+        {
+            string filePath = GetModelFilePath(ModelInfoList[0]);
+            return new SpeechRecognizer(filePath);
         }
 
         private SpeechSynthesizer CreateTTS()
@@ -109,6 +130,77 @@ namespace Voice100AndroidApp
             }
         }
 
+        protected override void OnResume()
+        {
+            base.OnResume();
+            UpdateButtons();
+            if (_downloadingTask == null)
+            {
+                _downloadingTask = Task.Run(DownloadAllModels);
+            }
+        }
+
+        private async Task DownloadAllModels()
+        {
+            try
+            {
+                using (var client = new HttpClient())
+                {
+                    for (int i = 0; i < ModelInfoList.Length; i++)
+                    {
+                        _statusText.Text = string.Format(
+                            GetString(Resource.String.downloading), i + 1, ModelInfoList.Length);
+                        await DownloadOneModel(client, ModelInfoList[i]);
+                    }
+                    _statusText.Text = "";
+                }
+                OnModelDownloaded();
+            }
+            catch (Exception ex)
+            {
+                _statusText.Text = "Error";
+            }
+            finally
+            {
+                _downloadingTask = null;
+            }
+        }
+
+        private void OnModelDownloaded()
+        {
+            _speechRecognizer = CreateSTT();
+            _speechRecognizer.OnDebugInfo += OnDebugInfo;
+            _speechRecognizer.OnSpeechRecognition = OnSpeechRecognition;
+            _speechSynthesizer = CreateTTS();
+        }
+
+        private async Task DownloadOneModel(HttpClient client, ModelInfo modelInfo)
+        {
+            string filePath = GetModelFilePath(modelInfo);
+            if (!File.Exists(filePath) || new FileInfo(filePath).Length < 1 * 1024 * 1024)
+            {
+                try
+                {
+                    using (var writer = File.OpenWrite(filePath))
+                    {
+                        using (var response = await client.GetAsync(modelInfo.URL))
+                        {
+                            await response.Content.CopyToAsync(writer);
+                        }
+                    }
+                    if (new FileInfo(filePath).Length < 1 * 1024 * 1024)
+                    {
+                        throw new IOException("File is too small.");
+                    }
+                }
+                catch (IOException)
+                {
+                    File.Delete(filePath);
+                    throw;
+                }
+            }
+        }
+
         protected override void OnPause()
         {
             base.OnPause();
@@ -119,10 +211,10 @@ namespace Voice100AndroidApp
 
         private void UpdateButtons()
         {
-            _startRecordButton.Enabled = !_isRecording;
-            _stopRecordButton.Enabled = _isRecording;
-            _startPlayButton.Enabled = !_isPlaying;
-            _stopPlayButton.Enabled = _isPlaying;
+            _startRecordButton.Enabled = !IsDownloading && !_isRecording;
+            _stopRecordButton.Enabled = !IsDownloading && _isRecording;
+            _startPlayButton.Enabled = !IsDownloading && !_isPlaying;
+            _stopPlayButton.Enabled = !IsDownloading && _isPlaying;
         }
 
         private void OnDebugInfo(string text)

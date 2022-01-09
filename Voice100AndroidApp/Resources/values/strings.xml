@@ -11,4 +11,5 @@
   <string name="sst_ort">stt_en_conv_base_ctc-20211125.all.ort</string>
   <string name="ttsalign_ort">ttsalign_en_conv_base-20210808.all.ort</string>
   <string name="ttsaudio_ort">ttsaudio_en_conv_base-20210811.all.ort</string>
+  <string name="downloading">Downloading model files, {0} of {1}...</string>
 </resources>
