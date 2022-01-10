@@ -44,6 +44,8 @@ namespace Voice100Sharp
         private bool _isActive;
         private int _audioBufferActiveOffset;
 
+        private WebRtcVad _vad;
+
         private SpeechRecognizer()
         {
             _encoder = new Encoder();
@@ -56,6 +58,7 @@ namespace Voice100Sharp
             _voicedAverageDecibel = UnvoicedDecibelMaxThreshold;
             _voicedRepeatCount = 0;
             _audioBufferActiveOffset = 0;
+            _vad = new WebRtcVad();
         }
 
         public SpeechRecognizer(string onnxPath) : this()
@@ -131,30 +134,8 @@ namespace Voice100Sharp
 
         private void UpdateVoiced(Span<short> audioBuffer, double frameAudioLevel)
         {
-            _audioLevelExpMovingAverage = _audioLevelExpMovingAverage * 0.9 + frameAudioLevel * 0.1;
-            _audioBufferVadOffset += VadWindowLength;
-            if (_audioBufferVadOffset >= audioBuffer.Length)
-            {
-                _audioBufferVadOffset = 0;
-            }
-
-            double audioDecibel = AudioDecibel;
-
-            // Audio is voiced when the decibel is more than the average of unvoiced average
-            // decibel and voiced average decibel.
-            _isVoiced = 2 * audioDecibel > _unvoicedAverageDecibel + _voicedAverageDecibel;
-            if (_isVoiced)
-            {
-                _voicedAverageDecibel = Math.Max(
-                    _voicedAverageDecibel * 0.9 + audioDecibel * 0.1,
-                    VoicedDecibelMinThreshold);
-            }
-            else
-            {
-                _unvoicedAverageDecibel = Math.Min(
-                    _unvoicedAverageDecibel * 0.9 + audioDecibel * 0.1,
-                    UnvoicedDecibelMaxThreshold);
-            }
+            var buffer = audioBuffer.Slice(_audioBufferVadOffset, 160).ToArray();
+            _isVoiced = _vad.Process(16000, buffer, 160);
         }
 
         private void UpdateActive(Span<short> audioBuffer)
@@ -316,6 +297,7 @@ namespace Voice100Sharp
 
         protected virtual void Dispose(bool disposing)
         {
+            _vad.Dispose();
             if (disposing && _inferSess != null)
             {
                 _inferSess.Dispose();
