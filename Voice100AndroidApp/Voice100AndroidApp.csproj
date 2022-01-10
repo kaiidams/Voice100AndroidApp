@@ -79,6 +79,7 @@
     <Compile Include="MainActivity.cs" />
     <Compile Include="Voice100Sharp\Encoder.cs" />
     <Compile Include="Voice100Sharp\SpeechSynthesizer.cs" />
+    <Compile Include="Voice100Sharp\WebRtcVad.cs" />
     <Compile Include="Voice100Sharp\Vocoder.cs" />
     <Compile Include="Voice100Sharp\SpeechRecognizer.cs" />
     <Compile Include="Voice100Sharp\AudioFeatureExtractor.cs" />
@@ -107,6 +108,10 @@
     <AndroidAsset Include="Assets\stt_en_conv_base_ctc-20211125.all.ort" />
     <AndroidAsset Include="Assets\ttsalign_en_conv_base-20210808.all.ort" />
     <AndroidAsset Include="Assets\ttsaudio_en_conv_base-20210811.all.ort" />
+    <AndroidNativeLibrary Include="lib\arm64-v8a\libwebrtc_vad.so" />
+    <AndroidNativeLibrary Include="lib\armeabi-v7a\libwebrtc_vad.so" />
+    <AndroidNativeLibrary Include="lib\x86\libwebrtc_vad.so" />
+    <AndroidNativeLibrary Include="lib\x86_64\libwebrtc_vad.so" />
     <None Include="Resources\AboutResources.txt" />
     <None Include="Properties\AndroidManifest.xml" />
     <None Include="Assets\AboutAssets.txt" />
