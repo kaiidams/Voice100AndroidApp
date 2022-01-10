@@ -1,65 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/activity_main">
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:minWidth="25px"
-        android:minHeight="25px"
+    <Button
+        android:id="@+id/start_recording"
+        android:text="@string/start_recording"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+    <Button
+        android:id="@+id/stop_recording"
+        android:text="@string/stop_recording"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+    <EditText
+        android:id="@+id/input_text"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/linearLayout1">
-        <Button
-            android:id="@+id/start_recording"
-            android:text="@string/start_recording"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <Button
-            android:id="@+id/stop_recording"
-            android:text="@string/stop_recording"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <EditText
-            android:id="@+id/input_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:inputType="textMultiLine"
-            android:text="@string/default_input_text" />
-        <Button
-            android:id="@+id/start_playing"
-            android:text="@string/start_playing"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <Button
-            android:id="@+id/stop_playing"
-            android:text="@string/stop_playing"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <TextView
-            android:id="@+id/magnitude"
-            android:text="0"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-        <voice100androidapp.SpectrogramView
-            android:id="@+id/spectrogram"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:layout_centerInParent="true" />
-        <voice100androidapp.GraphView
-            android:id="@+id/graph"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:layout_centerInParent="true" />
-        <TextView
-            android:id="@+id/recognition"
-            android:text="0"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
-
-</RelativeLayout>
+        android:layout_height="wrap_content"
+        android:inputType="textMultiLine"
+        android:text="@string/default_input_text" />
+    <Button
+        android:id="@+id/start_playing"
+        android:text="@string/start_playing"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+    <Button
+        android:id="@+id/stop_playing"
+        android:text="@string/stop_playing"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+    <TextView
+        android:id="@+id/magnitude"
+        android:text="0"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+    <voice100androidapp.SpectrogramView
+        android:id="@+id/spectrogram"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_centerInParent="true" />
+    <voice100androidapp.GraphView
+        android:id="@+id/graph"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_centerInParent="true" />
+    <TextView
+        android:id="@+id/recognition"
+        android:text="0"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+</LinearLayout>
