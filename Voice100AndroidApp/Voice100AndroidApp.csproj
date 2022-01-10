@@ -110,6 +110,8 @@
     <AndroidAsset Include="Assets\ttsaudio_en_conv_base-20210811.all.ort" />
     <AndroidNativeLibrary Include="lib\arm64-v8a\libwebrtc_vad.so" />
     <AndroidNativeLibrary Include="lib\armeabi-v7a\libwebrtc_vad.so" />
+    <AndroidNativeLibrary Include="lib\x86\libwebrtc_vad.so" />
+    <AndroidNativeLibrary Include="lib\x86_64\libwebrtc_vad.so" />
     <None Include="Resources\AboutResources.txt" />
     <None Include="Properties\AndroidManifest.xml" />
     <None Include="Assets\AboutAssets.txt" />

@@ -6,23 +6,29 @@ namespace Voice100Sharp
     internal class WebRtcVad : IDisposable
     {
 #if true
-        const string DllName = "libwebrtc_vad.so";
+        const string DllName = "webrtc_vad";
 #else
         const string DllName = "__Internal";
 #endif
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         static extern IntPtr WebRtcVad_Create();
+
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         static extern void WebRtcVad_Free(IntPtr handle);
+
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         static extern int WebRtcVad_Init(IntPtr handle);
+
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         static extern int WebRtcVad_set_mode(IntPtr handle, int mode);
+
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-        static extern int WebRtcVad_Process(IntPtr handle,
-                              int fs,
-                              short[] audio_frame,
-                              IntPtr frame_length);
+        static extern int WebRtcVad_Process(
+            IntPtr handle,
+            int fs,
+            short[] audio_frame,
+            IntPtr frame_length);
+
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         static extern int WebRtcVad_ValidRateAndFrameLength(int rate, IntPtr frame_length);
 

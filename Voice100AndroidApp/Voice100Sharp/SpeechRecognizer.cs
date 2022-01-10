@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace Voice100Sharp
 {
@@ -18,10 +17,6 @@ namespace Voice100Sharp
         const int SampleRate = 16000;
         const int AudioBytesBufferLength = 10 * SampleRate * sizeof(short);
         const int VadWindowLength = 160;
-        const double VoicedDecibelMinThreshold = -60.0;
-        const double UnvoicedDecibelMaxThreshold = -30.0;
-        const double ActivateThreshold = 0.7;
-        const double DeactivateThreshold = 0.2;
         const int MinRepeatVoicedCount = 10;
 
         private readonly Encoder _encoder;
@@ -32,13 +27,7 @@ namespace Voice100Sharp
         private int _audioBytesBufferWriteOffset;
 
         private int _audioBufferVadOffset;
-        private double _audioLevelExpMovingAverage;
-
         private bool _isVoiced;
-        private double _unvoicedAverageDecibel;
-        private double _voicedAverageDecibel;
-        private int _zeroCrossing;
-
         private int _voicedRepeatCount;
 
         private bool _isActive;
@@ -53,12 +42,10 @@ namespace Voice100Sharp
             _audioBytesBuffer = new byte[AudioBytesBufferLength];
             _audioBytesBufferWriteOffset = 0;
             _audioBufferVadOffset = 0;
-            _audioLevelExpMovingAverage = 0.0;
-            _unvoicedAverageDecibel = UnvoicedDecibelMaxThreshold;
-            _voicedAverageDecibel = UnvoicedDecibelMaxThreshold;
             _voicedRepeatCount = 0;
             _audioBufferActiveOffset = 0;
             _vad = new WebRtcVad();
+            _vad.SetMode(2);
         }
 
         public SpeechRecognizer(string onnxPath) : this()
@@ -81,7 +68,6 @@ namespace Voice100Sharp
         }
 
         public bool IsVoiced { get { return _isVoiced; } }
-        public double AudioDecibel { get { return 10 * Math.Log10(_audioLevelExpMovingAverage + 1e-15); } }
         public bool IsActive { get { return _isActive; } }
         public DebugInfoEvent OnDebugInfo { get; set; }
         public SpeechRecognitionEvent OnSpeechRecognition { get; set; }
@@ -103,16 +89,9 @@ namespace Voice100Sharp
             var audioBuffer = MemoryMarshal.Cast<byte, short>(_audioBytesBuffer);
             int audioBufferWriteOffset = _audioBytesBufferWriteOffset / sizeof(short);
 
-            UpdateAudioLevel(audioBuffer, audioBufferWriteOffset);
-        }
-
-        private void UpdateAudioLevel(Span<short> audioBuffer, int audioBufferWriteOffset)
-        {
             while (_audioBufferVadOffset / VadWindowLength != audioBufferWriteOffset / VadWindowLength)
             {
-                double frameAudioLevel = FrameAudioLevel(audioBuffer, _audioBufferVadOffset, VadWindowLength);
-                _zeroCrossing = FrameZeroCrossing(audioBuffer, _audioBufferVadOffset, VadWindowLength);
-                UpdateVoiced(audioBuffer, frameAudioLevel);
+                UpdateVoiced(audioBuffer);
                 UpdateActive(audioBuffer);
             }
             DebugInfo();
@@ -121,21 +100,22 @@ namespace Voice100Sharp
         private void DebugInfo()
         {
             string text = string.Format(
-                "IsVoiced:{0} IsActive:{1} AudioDecibel:{2:##.#} {3:##.#} {4:##.#} {5} {6}",
+                "IsVoiced:{0} IsActive:{1} {2}",
                 IsVoiced ? "X" : ".",
                 IsActive ? "X" : ".",
-                AudioDecibel,
-                _voicedAverageDecibel,
-                _unvoicedAverageDecibel,
-                _zeroCrossing,
                 _voicedRepeatCount);
             OnDebugInfo(text);
         }
 
-        private void UpdateVoiced(Span<short> audioBuffer, double frameAudioLevel)
+        private void UpdateVoiced(Span<short> audioBuffer)
         {
             var buffer = audioBuffer.Slice(_audioBufferVadOffset, 160).ToArray();
             _isVoiced = _vad.Process(16000, buffer, 160);
+            _audioBufferVadOffset += VadWindowLength;
+            if (_audioBufferVadOffset >= audioBuffer.Length)
+            {
+                _audioBufferVadOffset = 0;
+            }
         }
 
         private void UpdateActive(Span<short> audioBuffer)
@@ -262,46 +242,20 @@ namespace Voice100Sharp
             }
         }
 
-        private static double FrameAudioLevel(Span<short> audio, int offset, int length)
-        {
-            long mag = 0;
-            for (int i = offset; i < offset + length; i++)
-            {
-                long v = audio[i];
-                mag += v * v;
-            }
-            return mag / (length * 32768.0 * 32768.0);
-        }
-
-
-        private static int FrameZeroCrossing(Span<short> audio, int offset, int length)
-        {
-            double average = 0.0;
-            for (int i = offset; i < offset + length; i++)
-            {
-                average += audio[i];
-            }
-            average /= length;
-
-            int zeroCrossCount = 0;
-            for (int i = offset; i < offset + length - 1; i++)
-            {
-                if (audio[i] >= average && audio[i + 1] < average || audio[i + 1] >= average && audio[i] < average)
-                {
-                    zeroCrossCount++;
-                }
-            }
-
-            return zeroCrossCount;
-        }
-
         protected virtual void Dispose(bool disposing)
         {
-            _vad.Dispose();
-            if (disposing && _inferSess != null)
+            if (disposing)
             {
-                _inferSess.Dispose();
-                _inferSess = null;
+                if (_inferSess != null)
+                {
+                    _inferSess.Dispose();
+                    _inferSess = null;
+                }
+                if (_vad != null)
+                {
+                    _vad.Dispose();
+                    _vad = null;
+                }
             }
         }
 
