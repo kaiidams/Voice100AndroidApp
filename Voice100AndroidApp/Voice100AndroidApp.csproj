@@ -106,12 +106,12 @@
     <AndroidAsset Include="Assets\ttsalign_ja_conv_base-20211118.all.ort" />
     <AndroidAsset Include="Assets\ttsaudio_ja_conv_base-20211118.all.ort" />
     <AndroidAsset Include="Assets\ttsalign_en_conv_base-20210808.all.ort" />
-    <AndroidAsset Include="Assets\ttsaudio_en_conv_base-20210811.all.ort" />
     <AndroidNativeLibrary Include="lib\arm64-v8a\libwebrtc_vad.so" />
     <AndroidNativeLibrary Include="lib\armeabi-v7a\libwebrtc_vad.so" />
     <AndroidNativeLibrary Include="lib\x86\libwebrtc_vad.so" />
     <AndroidNativeLibrary Include="lib\x86_64\libwebrtc_vad.so" />
     <AndroidAsset Include="Assets\asr_en_conv_base_ctc-20220109.all.ort" />
+    <AndroidAsset Include="Assets\ttsaudio_en_conv_base-20220107.all.ort" />
     <None Include="Resources\AboutResources.txt" />
     <None Include="Properties\AndroidManifest.xml" />
     <None Include="Assets\AboutAssets.txt" />

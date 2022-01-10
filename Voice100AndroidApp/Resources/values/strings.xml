@@ -10,5 +10,5 @@
   <string name="not_implemented">Not implemented.</string>
   <string name="sst_ort">asr_en_conv_base_ctc-20220109.all.ort</string>
   <string name="ttsalign_ort">ttsalign_en_conv_base-20210808.all.ort</string>
-  <string name="ttsaudio_ort">ttsaudio_en_conv_base-20210811.all.ort</string>
+  <string name="ttsaudio_ort">ttsaudio_en_conv_base-20220107.all.ort</string>
 </resources>
