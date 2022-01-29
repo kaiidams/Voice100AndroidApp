@@ -8,7 +8,7 @@
   <string name="default_input_text">Please type here and click the button to speak.</string>
   <string name="audio_recording_permission_denied">Permission to use microphone denied.</string>
   <string name="not_implemented">Not implemented.</string>
-  <string name="sst_ort">asr_en_conv_base_ctc-20220109.all.ort</string>
+  <string name="sst_ort">asr_en_conv_base_ctc-20220126.all.ort</string>
   <string name="ttsalign_ort">ttsalign_en_conv_base-20210808.all.ort</string>
   <string name="ttsaudio_ort">ttsaudio_en_conv_base-20220107.all.ort</string>
 </resources>
